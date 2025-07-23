@@ -681,4 +681,6 @@ if __name__ == '__main__':
         print("Sample data in store:")
         print(data_store[['Room', 'Participants', 'Length_Hours', 'Contact_Hours']].head())
     
-    app.run(debug=True)
+    # Render.com deployment
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
