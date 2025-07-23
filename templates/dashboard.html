@@ -1,0 +1,1577 @@
+
+
+
+<!-- Trails -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation Center Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.18.0.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --background-color: #f8fafc;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        body { 
+            background-color: var(--background-color);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1e293b;
+        }
+
+        .navbar { 
+            background: white !important;
+            box-shadow: var(--card-shadow);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .navbar-brand { 
+            color: var(--primary-color) !important; 
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .nav-link { 
+            color: var(--secondary-color) !important;
+            font-weight: 500;
+            padding: 0.75rem 1rem !important;
+            border-radius: 8px;
+            margin: 0 0.25rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover, .nav-link.active { 
+            color: var(--primary-color) !important;
+            background-color: #eff6ff;
+        }
+
+        .section { 
+            display: none; 
+        }
+        
+        .active-section { 
+            display: block; 
+        }
+
+        .card { 
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 12px 12px 0 0 !important;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            border: none;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stats-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+        }
+
+        .stats-label {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .chart-container {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: #eff6ff;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: #eff6ff;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table th {
+            background-color: #f8fafc;
+            border-color: #e2e8f0;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: var(--secondary-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--secondary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header {
+            background: white;
+            padding: 2rem 0 1rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .section-subtitle {
+            color: var(--secondary-color);
+            margin-top: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .data-persistence-indicator {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: var(--success-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .data-persistence-indicator.show {
+            opacity: 1;
+        }
+
+        .period-selector {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .period-btn {
+            background: white;
+            border: 1px solid #d1d5db;
+            color: var(--secondary-color);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            margin-right: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .period-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .chart-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--secondary-color);
+        }
+
+        /* Custom Multi-Select Dropdown */
+        .multi-select-wrapper {
+            position: relative;
+        }
+
+        .multi-select-dropdown {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.95rem;
+            background: white;
+            cursor: pointer;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .multi-select-dropdown:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            outline: none;
+        }
+
+        .multi-select-placeholder {
+            color: #6b7280;
+        }
+
+        .multi-select-values {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .multi-select-tag {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .multi-select-tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .multi-select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .multi-select-option {
+            padding: 0.75rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .multi-select-option:hover {
+            background: #f3f4f6;
+        }
+
+        .multi-select-option.selected {
+            background: #eff6ff;
+            color: var(--primary-color);
+        }
+
+        .multi-select-dropdown-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .multi-select-dropdown.open .multi-select-dropdown-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Data persistence indicator -->
+    <div id="dataSavedIndicator" class="data-persistence-indicator">
+        <i class="fas fa-check-circle"></i> Data automatically saved
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-hospital-symbol"></i> Maverick Family Nursing Simulation Center
+            </a>
+            <div class="navbar-nav ms-auto d-flex flex-row">
+                <a class="nav-link active" href="#" onclick="showSection('dashboard')" data-section="dashboard">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a class="nav-link" href="#" onclick="showSection('add-session')" data-section="add-session">
+                    <i class="fas fa-plus"></i> Add Session
+                </a>
+                <a class="nav-link" href="#" onclick="showSection('sessions')" data-section="sessions">
+                    <i class="fas fa-list"></i> Sessions
+                </a>
+                <a class="nav-link" href="#" onclick="showSection('analytics')" data-section="analytics">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container mt-4">
+        
+        <!-- Dashboard Section -->
+        <div class="section active-section" id="dashboard">
+            <div class="section-header">
+                <h1 class="section-title">Dashboard</h1>
+                <p class="section-subtitle">Overview of simulation center activities</p>
+            </div>
+
+            <!-- Summary Statistics -->
+            <div class="stats-grid" id="summaryStats">
+                <div class="stats-card">
+                    <i class="fas fa-calendar-check fa-2x" style="color: var(--primary-color);"></i>
+                    <div class="stats-number" id="totalSessions">0</div>
+                    <div class="stats-label">Total Sessions</div>
+                </div>
+                <div class="stats-card">
+                    <i class="fas fa-users fa-2x" style="color: var(--success-color);"></i>
+                    <div class="stats-number" id="totalParticipants">0</div>
+                    <div class="stats-label">Total Participants</div>
+                </div>
+                <div class="stats-card">
+                    <i class="fas fa-clock fa-2x" style="color: #f59e0b;"></i>
+                    <div class="stats-number" id="totalContactHours">0</div>
+                    <div class="stats-label">Contact Hours</div>
+                </div>
+                <div class="stats-card">
+                    <i class="fas fa-door-open fa-2x" style="color: #8b5cf6;"></i>
+                    <div class="stats-number" id="uniqueRooms">0</div>
+                    <div class="stats-label">Active Rooms</div>
+                </div>
+            </div>
+
+            <!-- Quick Charts -->
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="chart-container">
+                        <h5 class="mb-3">Contact Hours Timeline</h5>
+                        <div id="quickTimelineChart"></div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="chart-container">
+                        <h5 class="mb-3">Room Utilization</h5>
+                        <div id="quickRoomChart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Session Section -->
+        <div class="section" id="add-session">
+            <div class="section-header">
+                <h1 class="section-title">Add New Session</h1>
+                <p class="section-subtitle">Record a new simulation session</p>
+            </div>
+
+            <div class="form-container">
+                <!-- File Upload -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-upload"></i> Bulk Upload
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-area" onclick="document.getElementById('uploadFile').click()">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <h5>Drop files here or click to upload</h5>
+                            <p class="text-muted">Supports CSV and Excel files</p>
+                            <input type="file" id="uploadFile" name="file" class="d-none" accept=".csv,.xlsx,.xls">
+                        </div>
+                        <button type="button" class="btn btn-primary mt-3 w-100" onclick="uploadFile()">
+                            <i class="fas fa-upload"></i> Upload File
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Manual Entry Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-edit"></i> Manual Entry
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="/add_record" method="post" id="sessionForm">
+                            
+                            <div class="form-group">
+                                <label class="form-label">Date (MM/DD/YY):</label>
+                                <input type="date" name="Date" class="form-control" required>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Branch:</label>
+                                    <select name="Branch" class="form-select" required>
+                                        <option value="">Select Branch</option>
+                                        <option value="Academic">Academic</option>
+                                        <option value="Workforce">Workforce</option>
+                                        <option value="Tour">Tour</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Operator:</label>
+                                    <select name="Operator" class="form-select" required>
+                                        <option value="">Select Operator</option>
+                                        <option value="Erica Mathis">Erica Mathis</option>
+                                        <option value="Megan Dohm">Megan Dohm</option>
+                                        <option value="Stephanie Bracken">Stephanie Bracken</option>
+                                        <option value="Ritesh Janga">Ritesh Janga</option>
+                                        <option value="Srajan Jain">Srajan Jain</option>
+                                        <option value="Kate Glogowski">Kate Glogowski</option>
+                                        <option value="Austosh Banset">Austosh Basnet</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Start Time:</label>
+                                    <input type="time" name="Start_Time" class="form-control">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Length (Hours):</label>
+                                    <input type="number" name="Length_Hours" class="form-control" step="0.5" min="0" max="12" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Recording Name:</label>
+                                <input type="text" name="Patient_Name" class="form-control" placeholder="e.g. Victor Maverick - Section 3">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Room:</label>
+                                    <select name="Room" class="form-select" required>
+                                        <option value="">Select Room</option>
+                                        <option value="Med-Surg 1">Med-Surg 1</option>
+                                        <option value="Med-Surg 2">Med-Surg 2</option>
+                                        <option value="Med-Surg 3">Med-Surg 3</option>
+                                        <option value="Peds">Peds</option>
+                                        <option value="OB">OB</option>
+                                        <option value="Home Health">Home Health</option>
+                                        <option value="OR">OR</option>
+                                        <option value="Off site">Off site</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Debrief Location:</label>
+                                    <select name="Debrief_Location" class="form-select">
+                                        <option value="">Select Location</option>
+                                        <option value="DB1">DB1</option>
+                                        <option value="DB2">DB2</option>
+                                        <option value="DB3">DB3</option>
+                                        <option value="214">214</option>
+                                        <option value="215">215</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Other Locations:</label>
+                                <div class="multi-select-wrapper">
+                                    <div class="multi-select-dropdown" tabindex="0" onclick="toggleMultiSelect()">
+                                        <div class="multi-select-content">
+                                            <span class="multi-select-placeholder">Select Locations</span>
+                                            <div class="multi-select-values" style="display: none;"></div>
+                                        </div>
+                                        <i class="fas fa-chevron-down multi-select-dropdown-icon"></i>
+                                    </div>
+                                    <div class="multi-select-options">
+                                        <div class="multi-select-option" data-value="Med room 1">Med room 1</div>
+                                        <div class="multi-select-option" data-value="Med room 2">Med room 2</div>
+                                        <div class="multi-select-option" data-value="MS1/MS2 Control">MS1/MS2 Control</div>
+                                        <div class="multi-select-option" data-value="MS3/OR Control">MS3/OR Control</div>
+                                        <div class="multi-select-option" data-value="HH/Peds/OB Control">HH/Peds/OB Control</div>
+                                        <div class="multi-select-option" data-value="Other">Other</div>
+                                    </div>
+                                </div>
+                                <!-- Hidden inputs to store selected values -->
+                                <div id="hiddenLocationInputs"></div>
+                                <small class="form-text text-muted">Click to select multiple locations</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Manikin:</label>
+                                <select name="Manikin" class="form-select">
+                                    <option value="">Select Manikin</option>
+                                    <option value="Adult Hal S5301">Adult Hal S5301</option>
+                                    <option value="SimMan 10 - Light">SimMan 10 - Light</option>
+                                    <option value="SimMan 15 - Light">SimMan 15 - Light</option>
+                                    <option value="SimMan 16- Light">SimMan 16- Light</option>
+                                    <option value="SimMan 17 - black">SimMan 17 - black</option>
+                                    <option value="SimMan 22 - Tan">SimMan 22 - Tan</option>
+                                    <option value="SimBaby - L">SimBaby - L</option>
+                                    <option value="SimJunior - Tan">SimJunior - Tan</option>
+                                    <option value="SimKid - L">SimKid - L</option>
+                                    <option value="Pediatric Hal S 2225">Pediatric Hal S 2225</option>
+                                    <option value="Birthing baby">Birthing baby</option>
+                                    <option value="Newborn Tory">Newborn Tory</option>
+                                    <option value="Super Tory">Super Tory</option>
+                                    <option value="Preemie Anne">Preemie Anne</option>
+                                    <option value="Victoria 1">Victoria 1</option>
+                                    <option value="Victoria 2">Victoria 2</option>
+                                    <option value="Nursing Anne (Black - Low fidelity)">Nursing Anne (Black - Low fidelity)</option>
+                                    <option value="Nursing Anne Simulator - D">Nursing Anne Simulator - D</option>
+                                    <option value="Nursing Anne Simulator - L">Nursing Anne Simulator - L</option>
+                                    <option value="None">None</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Number of Participants:</label>
+                                <input type="number" name="Participants" class="form-control" min="1" max="50" required>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">SP Used:</label>
+                                    <select name="Simulated_Participants" class="form-select">
+                                        <option value="">Select Option</option>
+                                        <option value="No">No</option>
+                                        <option value="Yes">Yes</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">SP Number:</label>
+                                    <input type="number" name="Num_Simulated_Participants" class="form-control" min="0" max="10">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Department:</label>
+                                    <select name="Department" class="form-select" required>
+                                        <option value="">Select Department</option>
+                                        <option value="Nursing - Undergraduate (PLP)">Nursing - Undergraduate (PLP)</option>
+                                        <option value="Athletic Training">Athletic Training</option>
+                                        <option value="Speech Hearing Rehab Sciences">Speech Hearing Rehab Sciences</option>
+                                        <option value="Dental">Dental</option>
+                                        <option value="Dietetics">Dietetics</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Nursing Course:</label>
+                                    <select name="Course" class="form-select">
+                                        <option value="">Select Course</option>
+                                        <option value="NURS 317">NURS 317</option>
+                                        <option value="NURS 334">NURS 334</option>
+                                        <option value="NURS 336">NURS 336</option>
+                                        <option value="NURS 364">NURS 364</option>
+                                        <option value="NURS 365">NURS 365</option>
+                                        <option value="NURS 433">NURS 433</option>
+                                        <option value="NURS 435">NURS 435</option>
+                                        <option value="NURS 436">NURS 436</option>
+                                        <option value="NURS 464">NURS 464</option>
+                                        <option value="NURS 466">NURS 466</option>
+                                        <option value="OTHER">OTHER</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-plus"></i> Add Session
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="clearForm()">
+                                    <i class="fas fa-broom"></i> Clear Form
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sessions List Section -->
+        <div class="section" id="sessions">
+            <div class="section-header">
+                <h1 class="section-title">Session Records</h1>
+                <p class="section-subtitle">View and manage all simulation sessions</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">All Sessions</h5>
+                    <a href="/download" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Export Excel
+                    </a>
+                </div>
+                <div class="table-container">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th>Branch</th>
+                                    <th>Operator</th>
+                                    <th>Room</th>
+                                    <th>Participants</th>
+                                    <th>Length</th>
+                                    <th>Contact Hours</th>
+                                    <th>Department</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recordTable">
+                                <tr>
+                                    <td colspan="10" class="text-center py-4">
+                                        <div class="loading-spinner">
+                                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                            <p class="mt-2">Loading sessions...</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="section" id="analytics">
+            <div class="section-header">
+                <h1 class="section-title">Analytics</h1>
+                <p class="section-subtitle">Detailed insights and visualizations</p>
+            </div>
+
+            <!-- Period Selection -->
+           <div class="period-selector">
+               <div class="d-flex align-items-center justify-content-between">
+                   <div>
+                       <h6 class="mb-2">Select Time Period:</h6>
+                       <div class="period-buttons">
+                           <button class="period-btn active" onclick="changePeriod('month')" data-period="month">
+                               <i class="fas fa-calendar-alt"></i> Monthly
+                           </button>
+                           <button class="period-btn" onclick="changePeriod('week')" data-period="week">
+                               <i class="fas fa-calendar-week"></i> Weekly
+                           </button>
+                           <button class="period-btn" onclick="changePeriod('quarter')" data-period="quarter">
+                               <i class="fas fa-calendar"></i> Quarterly
+                           </button>
+                       </div>
+                   </div>
+                   <button class="btn btn-primary" onclick="refreshAnalytics()">
+                       <i class="fas fa-sync-alt"></i> Refresh
+                   </button>
+               </div>
+           </div>
+
+           <!-- Charts -->
+           <div class="row">
+               <div class="col-12 mb-4">
+                   <div class="chart-container">
+                       <h5 class="mb-3">Room Utilization Analysis</h5>
+                       <div class="chart-loading" id="loading1">
+                           <i class="fas fa-spinner fa-spin fa-2x"></i>
+                           <span class="ms-2">Loading chart...</span>
+                       </div>
+                       <div id="roomUtilizationChart" style="display: none;"></div>
+                   </div>
+               </div>
+           </div>
+
+           <div class="row">
+               <div class="col-lg-6 mb-4">
+                   <div class="chart-container">
+                       <h5 class="mb-3">Learner Statistics by <span id="periodLabel">Month</span></h5>
+                       <div class="chart-loading" id="loading2">
+                           <i class="fas fa-spinner fa-spin fa-2x"></i>
+                           <span class="ms-2">Loading chart...</span>
+                       </div>
+                       <div id="learnerStatsChart" style="display: none;"></div>
+                   </div>
+               </div>
+               <div class="col-lg-6 mb-4">
+                   <div class="chart-container">
+                       <h5 class="mb-3">Contact Hours Timeline</h5>
+                       <div class="chart-loading" id="loading3">
+                           <i class="fas fa-spinner fa-spin fa-2x"></i>
+                           <span class="ms-2">Loading chart...</span>
+                       </div>
+                       <div id="contactHoursChart" style="display: none;"></div>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Branch Contact Hours Chart -->
+           <div class="row">
+               <div class="col-12 mb-4">
+                   <div class="chart-container">
+                       <h5 class="mb-3">Contact Hours by Branch</h5>
+                       <div class="chart-loading" id="loading4">
+                           <i class="fas fa-spinner fa-spin fa-2x"></i>
+                           <span class="ms-2">Loading chart...</span>
+                       </div>
+                       <div id="branchContactHoursChart" style="display: none;"></div>
+                   </div>
+               </div>
+           </div>
+       </div>
+
+   </div>
+
+   <!-- JavaScript -->
+   <script>
+       // Global variables
+       let currentPeriod = 'month';
+       let selectedLocations = [];
+
+       // Multi-select dropdown functionality
+       function toggleMultiSelect() {
+           const dropdown = document.querySelector('.multi-select-dropdown');
+           const options = document.querySelector('.multi-select-options');
+           
+           dropdown.classList.toggle('open');
+           
+           if (dropdown.classList.contains('open')) {
+               options.style.display = 'block';
+           } else {
+               options.style.display = 'none';
+           }
+       }
+
+       function selectMultiOption(value) {
+           if (selectedLocations.includes(value)) {
+               selectedLocations = selectedLocations.filter(loc => loc !== value);
+           } else {
+               selectedLocations.push(value);
+           }
+           updateMultiSelectDisplay();
+           updateHiddenInputs();
+       }
+
+       function removeMultiOption(value) {
+           selectedLocations = selectedLocations.filter(loc => loc !== value);
+           updateMultiSelectDisplay();
+           updateHiddenInputs();
+       }
+
+       function updateMultiSelectDisplay() {
+           const placeholder = document.querySelector('.multi-select-placeholder');
+           const valuesContainer = document.querySelector('.multi-select-values');
+           
+           if (selectedLocations.length === 0) {
+               placeholder.style.display = 'block';
+               valuesContainer.style.display = 'none';
+           } else {
+               placeholder.style.display = 'none';
+               valuesContainer.style.display = 'flex';
+               
+               valuesContainer.innerHTML = selectedLocations.map(location => 
+                   `<span class="multi-select-tag">
+                       ${location}
+                       <span class="remove" onclick="removeMultiOption('${location}')">&times;</span>
+                   </span>`
+               ).join('');
+           }
+           
+           // Update option states
+           document.querySelectorAll('.multi-select-option').forEach(option => {
+               const value = option.getAttribute('data-value');
+               if (selectedLocations.includes(value)) {
+                   option.classList.add('selected');
+               } else {
+                   option.classList.remove('selected');
+               }
+           });
+       }
+
+       function updateHiddenInputs() {
+           const container = document.getElementById('hiddenLocationInputs');
+           container.innerHTML = selectedLocations.map(location => 
+               `<input type="hidden" name="Other_Locations" value="${location}">`
+           ).join('');
+       }
+
+       // Navigation functions
+       function showSection(sectionId) {
+           // Update nav links
+           document.querySelectorAll('.nav-link').forEach(link => {
+               link.classList.remove('active');
+           });
+           
+           // Find and activate the clicked nav link
+           const clickedLink = document.querySelector(`[data-section="${sectionId}"]`);
+           if (clickedLink) {
+               clickedLink.classList.add('active');
+           }
+
+           // Show section
+           document.querySelectorAll('.section').forEach(section => {
+               section.classList.remove('active-section');
+           });
+           document.getElementById(sectionId).classList.add('active-section');
+
+           // Load section-specific data
+           switch(sectionId) {
+               case 'dashboard':
+                   loadDashboard();
+                   break;
+               case 'sessions':
+                   fetchRecords();
+                   break;
+               case 'analytics':
+                   loadAnalytics();
+                   break;
+           }
+       }
+
+       // Period selection functions
+       function changePeriod(period) {
+           currentPeriod = period;
+           
+           // Update button states
+           document.querySelectorAll('.period-btn').forEach(btn => {
+               btn.classList.remove('active');
+           });
+           document.querySelector(`[data-period="${period}"]`).classList.add('active');
+           
+           // Update period label
+           document.getElementById('periodLabel').textContent = period.charAt(0).toUpperCase() + period.slice(1);
+           
+           // Refresh analytics
+           loadAnalytics();
+       }
+
+       function refreshAnalytics() {
+           loadAnalytics();
+       }
+
+       // Show data saved indicator
+       function showDataSavedIndicator() {
+           const indicator = document.getElementById('dataSavedIndicator');
+           indicator.classList.add('show');
+           setTimeout(() => {
+               indicator.classList.remove('show');
+           }, 3000);
+       }
+
+       // Dashboard functions
+       function loadDashboard() {
+           loadSummaryStats();
+           loadQuickCharts();
+       }
+
+       function loadSummaryStats() {
+           fetch('/api/summary_stats')
+               .then(response => response.json())
+               .then(data => {
+                   document.getElementById('totalSessions').textContent = data.total_sessions || 0;
+                   document.getElementById('totalParticipants').textContent = data.total_participants || 0;
+                   document.getElementById('totalContactHours').textContent = (data.total_contact_hours || 0).toFixed(1);
+                   document.getElementById('uniqueRooms').textContent = data.unique_rooms || 0;
+               })
+               .catch(error => {
+                   console.error('Failed to load summary statistics:', error);
+               });
+       }
+
+       function loadQuickCharts() {
+           // Room utilization chart
+           fetch('/api/room_utilization')
+               .then(response => response.json())
+               .then(data => {
+                   if (data.graph) {
+                       const graphData = JSON.parse(data.graph);
+                       graphData.layout.height = 300;
+                       graphData.layout.margin = {l: 40, r: 40, t: 40, b: 80};
+                       
+                       Plotly.newPlot('quickRoomChart', graphData.data, graphData.layout, {responsive: true, displayModeBar: false});
+                   } else {
+                       document.getElementById('quickRoomChart').innerHTML = 
+                           '<div class="empty-state"><i class="fas fa-chart-bar fa-3x"></i><p>No data available</p></div>';
+                   }
+               })
+               .catch(error => {
+                   console.error('Chart error:', error);
+                   document.getElementById('quickRoomChart').innerHTML = 
+                       '<div class="empty-state"><i class="fas fa-chart-bar fa-3x"></i><p>No data available</p></div>';
+               });
+
+           // Timeline chart
+           fetch('/api/contact_hours_timeline')
+               .then(response => response.json())
+               .then(data => {
+                   if (data.graph) {
+                       const graphData = JSON.parse(data.graph);
+                       graphData.layout.height = 300;
+                       graphData.layout.margin = {l: 40, r: 40, t: 40, b: 40};
+                       
+                       Plotly.newPlot('quickTimelineChart', graphData.data, graphData.layout, {responsive: true, displayModeBar: false});
+                   } else {
+                       document.getElementById('quickTimelineChart').innerHTML = 
+                           '<div class="empty-state"><i class="fas fa-chart-line fa-3x"></i><p>No data available</p></div>';
+                   }
+               })
+               .catch(error => {
+                   console.error('Timeline chart error:', error);
+                   document.getElementById('quickTimelineChart').innerHTML = 
+                       '<div class="empty-state"><i class="fas fa-chart-line fa-3x"></i><p>No data available</p></div>';
+               });
+       }
+
+       // File upload functions
+       function uploadFile() {
+           const fileInput = document.getElementById('uploadFile');
+           const file = fileInput.files[0];
+           
+           if (!file) {
+               alert('Please select a file first.');
+               return;
+           }
+
+           const formData = new FormData();
+           formData.append('file', file);
+
+           // Show loading state
+           const uploadBtn = document.querySelector('.btn-primary');
+           const originalText = uploadBtn.innerHTML;
+           uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+           uploadBtn.disabled = true;
+
+           fetch('/upload', {
+               method: 'POST',
+               body: formData
+           })
+           .then(response => response.json())
+           .then(data => {
+               if (data.error) {
+                   throw new Error(data.error);
+               }
+               alert(`✅ Success! ${data.message}\nRows added: ${data.rows_added}`);
+               fileInput.value = '';
+               loadSummaryStats();
+               showDataSavedIndicator();
+           })
+           .catch(error => {
+               alert('❌ Upload failed: ' + error.message);
+           })
+           .finally(() => {
+               uploadBtn.innerHTML = originalText;
+               uploadBtn.disabled = false;
+           });
+       }
+
+       // Records functions
+       function fetchRecords() {
+           const tableBody = document.getElementById('recordTable');
+           
+           // Show loading state
+           tableBody.innerHTML = `
+               <tr>
+                   <td colspan="10" class="text-center py-4">
+                       <div class="loading-spinner" style="display: block;">
+                           <i class="fas fa-spinner fa-spin fa-2x"></i>
+                           <p class="mt-2">Loading sessions...</p>
+                       </div>
+                   </td>
+               </tr>
+           `;
+
+           fetch('/records')
+               .then(response => response.json())
+               .then(data => {
+                   if (data.length === 0) {
+                       tableBody.innerHTML = `
+                           <tr>
+                               <td colspan="10" class="text-center py-5">
+                                   <div class="empty-state">
+                                       <i class="fas fa-calendar-times fa-3x text-muted"></i>
+                                       <h5 class="mt-3 text-muted">No sessions found</h5>
+                                       <p class="text-muted">Add your first simulation session to get started.</p>
+                                   </div>
+                               </td>
+                           </tr>
+                       `;
+                       return;
+                   }
+
+                   let html = '';
+                   data.forEach((row, i) => {
+                       const contactHours = (row.Participants || 0) * (row.Length_Hours || 0);
+                       const date = row.Date ? new Date(row.Date).toLocaleDateString() : '';
+                       
+                       html += `
+                           <tr>
+                               <td>${i + 1}</td>
+                               <td>${date}</td>
+                               <td><span class="badge bg-primary">${row.Branch || ''}</span></td>
+                               <td>${row.Operator || ''}</td>
+                               <td><span class="badge bg-info">${row.Room || ''}</span></td>
+                               <td>${row.Participants || ''}</td>
+                               <td>${row.Length_Hours || ''} hrs</td>
+                               <td><strong>${contactHours.toFixed(1)}</strong></td>
+                               <td>${row.Department || ''}</td>
+                               <td>
+                                   <button class='btn btn-outline-primary btn-sm me-1' onclick='updateRecord(${i})' title="Update session">
+                                       <i class='fas fa-edit'></i>
+                                   </button>
+                                   <form method='post' action='/delete_record' style='display:inline;'>
+                                       <input type='hidden' name='index' value='${i}'>
+                                       <button class='btn btn-outline-danger btn-sm' onclick='return confirm("Delete this session?")' title="Delete session">
+                                           <i class='fas fa-trash'></i>
+                                       </button>
+                                   </form>
+                               </td>
+                           </tr>
+                       `;
+                   });
+                   tableBody.innerHTML = html;
+               })
+               .catch(error => {
+                   console.error('Error loading records:', error);
+                   tableBody.innerHTML = `
+                       <tr>
+                           <td colspan="10" class="text-center py-4">
+                               <div class="text-danger">
+                                   <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                   <p class="mt-2">Error loading sessions</p>
+                               </div>
+                           </td>
+                       </tr>
+                   `;
+               });
+       }
+
+       // Analytics functions
+       function loadAnalytics() {
+           // Show loading indicators
+           document.getElementById('loading1').style.display = 'flex';
+           document.getElementById('loading2').style.display = 'flex';
+           document.getElementById('loading3').style.display = 'flex';
+           document.getElementById('loading4').style.display = 'flex';
+           
+           document.getElementById('roomUtilizationChart').style.display = 'none';
+           document.getElementById('learnerStatsChart').style.display = 'none';
+           document.getElementById('contactHoursChart').style.display = 'none';
+           document.getElementById('branchContactHoursChart').style.display = 'none';
+           
+           // Load room utilization
+           fetch(`/api/room_utilization?period=${currentPeriod}`)
+               .then(response => response.json())
+               .then(data => {
+                   document.getElementById('loading1').style.display = 'none';
+                   const chartDiv = document.getElementById('roomUtilizationChart');
+                   
+                   if (data.graph) {
+                       const graphData = JSON.parse(data.graph);
+                       graphData.layout.height = 400;
+                       graphData.layout.margin = {l: 60, r: 40, t: 60, b: 100};
+                       
+                       Plotly.newPlot('roomUtilizationChart', graphData.data, graphData.layout, {responsive: true});
+                       chartDiv.style.display = 'block';
+                   } else {
+                       chartDiv.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar fa-3x"></i><p>No data available</p></div>';
+                       chartDiv.style.display = 'block';
+                   }
+               })
+               .catch(error => {
+                   document.getElementById('loading1').style.display = 'none';
+                   document.getElementById('roomUtilizationChart').innerHTML = 
+                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p></div>';
+                   document.getElementById('roomUtilizationChart').style.display = 'block';
+               });
+           
+           // Load learner statistics
+           fetch(`/api/learner_stats?period=${currentPeriod}`)
+               .then(response => response.json())
+               .then(data => {
+                   document.getElementById('loading2').style.display = 'none';
+                   const chartDiv = document.getElementById('learnerStatsChart');
+                   
+                   if (data.graph) {
+                       const graphData = JSON.parse(data.graph);
+                       graphData.layout.height = 400;
+                       graphData.layout.margin = {l: 60, r: 60, t: 60, b: 80};
+                       Plotly.newPlot('learnerStatsChart', graphData.data, graphData.layout, {responsive: true});
+                       chartDiv.style.display = 'block';
+                   } else {
+                       chartDiv.innerHTML = '<div class="empty-state"><i class="fas fa-users fa-3x"></i><p>No data available</p></div>';
+                       chartDiv.style.display = 'block';
+                   }
+               })
+               .catch(error => {
+                   document.getElementById('loading2').style.display = 'none';
+                   document.getElementById('learnerStatsChart').innerHTML = 
+                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p></div>';
+                   document.getElementById('learnerStatsChart').style.display = 'block';
+               });
+           
+           // Load contact hours timeline
+           fetch('/api/contact_hours_timeline')
+               .then(response => response.json())
+               .then(data => {
+                   document.getElementById('loading3').style.display = 'none';
+                   const chartDiv = document.getElementById('contactHoursChart');
+                   
+                   if (data.graph) {
+                       const graphData = JSON.parse(data.graph);
+                       graphData.layout.height = 400;
+                       graphData.layout.margin = {l: 60, r: 40, t: 60, b: 60};
+                       Plotly.newPlot('contactHoursChart', graphData.data, graphData.layout, {responsive: true});
+                       chartDiv.style.display = 'block';
+                   } else {
+                       chartDiv.innerHTML = '<div class="empty-state"><i class="fas fa-chart-line fa-3x"></i><p>No data available</p></div>';
+                       chartDiv.style.display = 'block';
+                   }
+               })
+               .catch(error => {
+                   document.getElementById('loading3').style.display = 'none';
+                   document.getElementById('contactHoursChart').innerHTML = 
+                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p></div>';
+                   document.getElementById('contactHoursChart').style.display = 'block';
+               });
+
+           // Load branch contact hours chart
+           fetch('/api/branch_contact_hours')
+               .then(response => response.json())
+               .then(data => {
+                   document.getElementById('loading4').style.display = 'none';
+                   const chartDiv = document.getElementById('branchContactHoursChart');
+                   
+                   if (data.graph) {
+                       const graphData = JSON.parse(data.graph);
+                       graphData.layout.height = 400;
+                       graphData.layout.margin = {l: 60, r: 40, t: 60, b: 100};
+                       Plotly.newPlot('branchContactHoursChart', graphData.data, graphData.layout, {responsive: true});
+                       chartDiv.style.display = 'block';
+                   } else {
+                       chartDiv.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar fa-3x"></i><p>No data available</p></div>';
+                       chartDiv.style.display = 'block';
+                   }
+               })
+               .catch(error => {
+                   document.getElementById('loading4').style.display = 'none';
+                   document.getElementById('branchContactHoursChart').innerHTML = 
+                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p></div>';
+                   document.getElementById('branchContactHoursChart').style.display = 'block';
+               });
+       }
+
+       // Form functions
+       function clearForm() {
+           document.getElementById('sessionForm').reset();
+           selectedLocations = [];
+           updateMultiSelectDisplay();
+           updateHiddenInputs();
+       }
+
+       // Update record function
+       function updateRecord(index) {
+           fetch('/records')
+               .then(response => response.json())
+               .then(data => {
+                   if (data[index]) {
+                       const record = data[index];
+                       
+                       // Populate form with existing data
+                       const form = document.getElementById('sessionForm');
+                       
+                       // Convert date format for input
+                       if (record.Date) {
+                           const date = new Date(record.Date);
+                           const formattedDate = date.toISOString().split('T')[0];
+                           form.querySelector('input[name="Date"]').value = formattedDate;
+                       }
+                       
+                       form.querySelector('select[name="Branch"]').value = record.Branch || '';
+                       form.querySelector('select[name="Operator"]').value = record.Operator || '';
+                       form.querySelector('input[name="Start_Time"]').value = record.Start_Time || '';
+                       form.querySelector('input[name="Length_Hours"]').value = record.Length_Hours || '';
+                       form.querySelector('input[name="Patient_Name"]').value = record.Patient_Name || '';
+                       form.querySelector('select[name="Room"]').value = record.Room || '';
+                       form.querySelector('select[name="Debrief_Location"]').value = record.Debrief_Location || '';
+                       form.querySelector('select[name="Manikin"]').value = record.Manikin || '';
+                       form.querySelector('input[name="Participants"]').value = record.Participants || '';
+                       form.querySelector('select[name="Simulated_Participants"]').value = record.Simulated_Participants || '';
+                       form.querySelector('input[name="Num_Simulated_Participants"]').value = record.Num_Simulated_Participants || '';
+                       form.querySelector('select[name="Department"]').value = record.Department || '';
+                       form.querySelector('select[name="Course"]').value = record.Course || '';
+                       
+                       // Handle Other_Locations multi-select
+                       selectedLocations = [];
+                       if (record.Other_Locations) {
+                           selectedLocations = record.Other_Locations.split(', ').filter(loc => loc.trim() !== '');
+                       }
+                       updateMultiSelectDisplay();
+                       updateHiddenInputs();
+                       
+                       // Add hidden field to track update
+                       const updateField = document.createElement('input');
+                       updateField.type = 'hidden';
+                       updateField.name = 'update_index';
+                       updateField.value = index;
+                       updateField.id = 'updateIndex';
+                       
+                       // Remove existing update field if any
+                       const existingField = document.getElementById('updateIndex');
+                       if (existingField) {
+                           existingField.remove();
+                       }
+                       
+                       form.appendChild(updateField);
+                       
+                       // Change form action and button text
+                       form.action = '/update_record';
+                       const submitBtn = form.querySelector('button[type="submit"]');
+                       submitBtn.innerHTML = '<i class="fas fa-save"></i> Update Session';
+                       submitBtn.className = 'btn btn-primary btn-lg';
+                       
+                       // Add cancel button
+                       let cancelBtn = document.getElementById('cancelUpdateBtn');
+                       if (!cancelBtn) {
+                           cancelBtn = document.createElement('button');
+                           cancelBtn.type = 'button';
+                           cancelBtn.id = 'cancelUpdateBtn';
+                           cancelBtn.className = 'btn btn-outline-secondary';
+                           cancelBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                           cancelBtn.onclick = cancelUpdate;
+                           submitBtn.parentNode.insertBefore(cancelBtn, submitBtn.nextSibling);
+                       }
+                       
+                       // Switch to add session section
+                       showSection('add-session');
+                       
+                       // Scroll to form
+                       document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+                   }
+               })
+               .catch(error => {
+                   console.error('Error loading record for update:', error);
+                   alert('Error loading record for update');
+               });
+       }
+
+       function cancelUpdate() {
+           const form = document.getElementById('sessionForm');
+           
+           // Reset form
+           clearForm();
+           
+           // Reset form action and button
+           form.action = '/add_record';
+           const submitBtn = form.querySelector('button[type="submit"]');
+           submitBtn.innerHTML = '<i class="fas fa-plus"></i> Add Session';
+           submitBtn.className = 'btn btn-success btn-lg';
+           
+           // Remove update index field
+           const updateField = document.getElementById('updateIndex');
+           if (updateField) {
+               updateField.remove();
+           }
+           
+           // Remove cancel button
+           const cancelBtn = document.getElementById('cancelUpdateBtn');
+           if (cancelBtn) {
+               cancelBtn.remove();
+           }
+       }
+
+       // Setup event listeners
+       document.addEventListener('DOMContentLoaded', function() {
+           // Load dashboard by default
+           loadDashboard();
+           
+           // Setup drag and drop
+           setupDragAndDrop();
+           
+           // Setup form validation
+           setupFormValidation();
+           
+           // Setup multi-select event listeners
+           document.querySelectorAll('.multi-select-option').forEach(option => {
+               option.addEventListener('click', function() {
+                   const value = this.getAttribute('data-value');
+                   selectMultiOption(value);
+               });
+           });
+           
+           // Close multi-select when clicking outside
+           document.addEventListener('click', function(e) {
+               const multiSelect = document.querySelector('.multi-select-wrapper');
+               if (!multiSelect.contains(e.target)) {
+                   document.querySelector('.multi-select-dropdown').classList.remove('open');
+                   document.querySelector('.multi-select-options').style.display = 'none';
+               }
+           });
+           
+           // Auto-refresh dashboard every 5 minutes
+           setInterval(function() {
+               const currentSection = document.querySelector('.active-section').id;
+               if (currentSection === 'dashboard') {
+                   loadSummaryStats();
+               }
+           }, 300000); // 5 minutes
+       });
+
+       // Drag and drop functionality
+       function setupDragAndDrop() {
+           const uploadArea = document.querySelector('.upload-area');
+           
+           ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+               uploadArea.addEventListener(eventName, preventDefaults, false);
+               document.body.addEventListener(eventName, preventDefaults, false);
+           });
+
+           ['dragenter', 'dragover'].forEach(eventName => {
+               uploadArea.addEventListener(eventName, highlight, false);
+           });
+
+           ['dragleave', 'drop'].forEach(eventName => {
+               uploadArea.addEventListener(eventName, unhighlight, false);
+           });
+
+           uploadArea.addEventListener('drop', handleDrop, false);
+
+           function preventDefaults(e) {
+               e.preventDefault();
+               e.stopPropagation();
+           }
+
+           function highlight(e) {
+               uploadArea.classList.add('dragover');
+           }
+
+           function unhighlight(e) {
+               uploadArea.classList.remove('dragover');
+           }
+
+           function handleDrop(e) {
+               const dt = e.dataTransfer;
+               const files = dt.files;
+               
+               if (files.length > 0) {
+                   document.getElementById('uploadFile').files = files;
+                   uploadFile();
+               }
+           }
+       }
+
+       // Form validation
+       function setupFormValidation() {
+           const form = document.getElementById('sessionForm');
+           
+           form.addEventListener('submit', function(e) {
+               const date = form.querySelector('input[name="Date"]').value;
+               const participants = form.querySelector('input[name="Participants"]').value;
+               const length = form.querySelector('input[name="Length_Hours"]').value;
+               const branch = form.querySelector('select[name="Branch"]').value;
+               const operator = form.querySelector('select[name="Operator"]').value;
+               const room = form.querySelector('select[name="Room"]').value;
+               const department = form.querySelector('select[name="Department"]').value;
+               
+               if (!date || !participants || !length || !branch || !operator || !room || !department) {
+                   e.preventDefault();
+                   alert('Please fill in all required fields.');
+                   return;
+               }
+               
+               if (participants < 1) {
+                   e.preventDefault();
+                   alert('Number of participants must be at least 1.');
+                   return;
+               }
+               
+               if (length <= 0) {
+                   e.preventDefault();
+                   alert('Session length must be greater than 0.');
+                   return;
+               }
+               
+               // Show data saved indicator after successful submit
+               setTimeout(() => {
+                   showDataSavedIndicator();
+               }, 500);
+           });
+       }
+
+       // Window resize handler for charts
+       window.addEventListener('resize', function() {
+           setTimeout(function() {
+               // Resize all visible Plotly charts
+               const charts = ['quickRoomChart', 'quickTimelineChart', 'roomUtilizationChart', 'learnerStatsChart', 'contactHoursChart', 'branchContactHoursChart'];
+               charts.forEach(chartId => {
+                   const element = document.getElementById(chartId);
+                   if (element && element.style.display !== 'none') {
+                       try {
+                           Plotly.Plots.resize(chartId);
+                       } catch (error) {
+                           console.log('Chart resize error:', error);
+                       }
+                   }
+               });
+           }, 100);
+       });
+
+       // Utility functions
+       function formatDate(dateString) {
+           if (!dateString) return '';
+           return new Date(dateString).toLocaleDateString('en-US', {
+               year: 'numeric',
+               month: 'short',
+               day: 'numeric'
+           });
+       }
+
+       function formatNumber(num) {
+           if (!num) return '0';
+           return num.toLocaleString();
+       }
+
+       // Export functions for debugging
+       window.debugFunctions = {
+           loadDashboard,
+           fetchRecords,
+           loadAnalytics,
+           uploadFile,
+           changePeriod
+       };
+   </script>
+
+</body>
+</html>
