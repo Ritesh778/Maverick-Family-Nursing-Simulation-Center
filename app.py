@@ -20,7 +20,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 FIELDS = [
     'Date','Branch','Operator','Start_Time','Length_Hours','Patient_Name','Room',
     'Debrief_Location','Other_Locations','Manikin','Participants','Department',
-    'Course','Simulated_Participants','Num_Simulated_Participants'
+    'Course','Simulated_Participants','Num_Simulated_Participants','SP_Name'
 ]
 
 # Load persisted data on startup
@@ -178,7 +178,61 @@ def home():
 
 @app.route('/records')
 def records():
-    return jsonify(data_store.to_dict('records'))
+    # Get pagination parameters
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+    search_branch = request.args.get('search_branch', '')
+    
+    # Start with all data
+    filtered_data = data_store.copy()
+    
+    # Apply date range filter if provided
+    if start_date:
+        try:
+            start_date_obj = pd.to_datetime(start_date)
+            filtered_data = filtered_data[filtered_data['Date'] >= start_date_obj]
+        except:
+            pass  # Invalid date format, ignore filter
+    
+    if end_date:
+        try:
+            end_date_obj = pd.to_datetime(end_date)
+            filtered_data = filtered_data[filtered_data['Date'] <= end_date_obj]
+        except:
+            pass  # Invalid date format, ignore filter
+    
+    # Apply branch filter if provided
+    if search_branch:
+        filtered_data = filtered_data[filtered_data['Branch'].str.contains(search_branch, case=False, na=False)]
+    
+    # Calculate pagination
+    total_records = len(filtered_data)
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    
+    # Get paginated data
+    paginated_data = filtered_data.iloc[start_idx:end_idx]
+    
+    # Calculate pagination info
+    total_pages = (total_records + per_page - 1) // per_page
+    has_prev = page > 1
+    has_next = page < total_pages
+    
+    return jsonify({
+        'records': paginated_data.to_dict('records'),
+        'pagination': {
+            'page': page,
+            'per_page': per_page,
+            'total_records': total_records,
+            'total_pages': total_pages,
+            'has_prev': has_prev,
+            'has_next': has_next,
+            'start_record': start_idx + 1 if total_records > 0 else 0,
+            'end_record': min(end_idx, total_records)
+        }
+    })
 
 @app.route('/add_record', methods=['POST'])
 def add_record():
@@ -274,6 +328,77 @@ def delete_record():
         save_data()
     
     return redirect(url_for('home'))
+
+@app.route('/bulk_delete', methods=['POST'])
+def bulk_delete():
+    global data_store
+    
+    print("\n=== Bulk deleting records ===")
+    
+    # Get selected indices from request
+    selected_indices = request.json.get('indices', [])
+    
+    if not selected_indices:
+        return jsonify({'error': 'No records selected'}), 400
+    
+    try:
+        # Sort indices in descending order to avoid index shifting issues
+        selected_indices.sort(reverse=True)
+        
+        # Delete records
+        for index in selected_indices:
+            if 0 <= index < len(data_store):
+                data_store.drop(data_store.index[index], inplace=True)
+        
+        # Reset index
+        data_store.reset_index(drop=True, inplace=True)
+        
+        # Reprocess all data to ensure consistency
+        data_store = process_data(data_store)
+        
+        print(f"Data store now has {len(data_store)} records after bulk delete")
+        
+        # Save data to file
+        save_data()
+        
+        return jsonify({'message': f'Successfully deleted {len(selected_indices)} records'}), 200
+        
+    except Exception as e:
+        print(f"Error in bulk delete: {e}")
+        return jsonify({'error': 'Error deleting records'}), 500
+
+@app.route('/bulk_download', methods=['POST'])
+def bulk_download():
+    print("\n=== Bulk downloading records ===")
+    
+    # Get selected indices from request
+    selected_indices = request.json.get('indices', [])
+    
+    if not selected_indices:
+        return jsonify({'error': 'No records selected'}), 400
+    
+    try:
+        # Get selected records
+        selected_data = data_store.iloc[selected_indices]
+        
+        if selected_data.empty:
+            return jsonify({'error': 'No valid data to download'}), 400
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            selected_data.to_excel(writer, sheet_name='Selected Records', index=False)
+        
+        output.seek(0)
+        return send_file(
+            output,
+            download_name=f'selected_simulation_data_{datetime.now().strftime("%Y%m%d")}.xlsx',
+            as_attachment=True,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        
+    except Exception as e:
+        print(f"Error in bulk download: {e}")
+        return jsonify({'error': 'Error downloading records'}), 500
 
 @app.route('/upload', methods=['POST'])
 def upload():

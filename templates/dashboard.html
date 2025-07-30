@@ -1,8 +1,3 @@
-
-
-
-<!-- Trails -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -405,6 +400,98 @@
         .multi-select-dropdown.open .multi-select-dropdown-icon {
             transform: rotate(180deg);
         }
+
+        /* Search and Pagination Styles */
+        .search-filters {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .pagination-info {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: var(--secondary-color);
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .pagination-btn:hover {
+            background: #f3f4f6;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .pagination-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .bulk-actions {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .bulk-actions.show {
+            display: block;
+        }
+
+        .select-all-checkbox {
+            margin-right: 0.5rem;
+        }
+
+        .record-checkbox {
+            margin-right: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .search-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .pagination-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -677,6 +764,11 @@
                                 </div>
                             </div>
 
+                            <div class="form-group">
+                                <label class="form-label">SP Name:</label>
+                                <input type="text" name="SP_Name" class="form-control" placeholder="Enter SP name if applicable">
+                            </div>
+
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Department:</label>
@@ -731,11 +823,57 @@
                 <p class="section-subtitle">View and manage all simulation sessions</p>
             </div>
 
+            <!-- Search Filters -->
+            <div class="search-filters">
+                <h6 class="mb-3">Search and Filter</h6>
+                <div class="search-row">
+                    <div class="form-group mb-0">
+                        <label class="form-label">Start Date:</label>
+                        <input type="date" id="startDate" class="form-control" onchange="applyFilters()">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label">End Date:</label>
+                        <input type="date" id="endDate" class="form-control" onchange="applyFilters()">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label">Filter by Branch:</label>
+                        <select id="searchBranch" class="form-select" onchange="applyFilters()">
+                            <option value="">All Branches</option>
+                            <option value="Academic">Academic</option>
+                            <option value="Workforce">Workforce</option>
+                            <option value="Tour">Tour</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Actions -->
+            <div class="bulk-actions" id="bulkActions">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span id="selectedCountText">0 records selected</span>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-primary btn-sm me-2" onclick="bulkDownload()">
+                            <i class="fas fa-download"></i> Download Selected
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="bulkDelete()">
+                            <i class="fas fa-trash"></i> Delete Selected
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title">All Sessions</h5>
                     <a href="/download" class="btn btn-outline-primary">
-                        <i class="fas fa-download"></i> Export Excel
+                        <i class="fas fa-download"></i> Export All Excel
                     </a>
                 </div>
                 <div class="table-container">
@@ -743,6 +881,9 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
+                                    <th>
+                                        <input type="checkbox" class="select-all-checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                    </th>
                                     <th>#</th>
                                     <th>Date</th>
                                     <th>Branch</th>
@@ -757,7 +898,7 @@
                             </thead>
                             <tbody id="recordTable">
                                 <tr>
-                                    <td colspan="10" class="text-center py-4">
+                                    <td colspan="11" class="text-center py-4">
                                         <div class="loading-spinner">
                                             <i class="fas fa-spinner fa-spin fa-2x"></i>
                                             <p class="mt-2">Loading sessions...</p>
@@ -766,6 +907,16 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="pagination-container">
+                        <div class="pagination-info" id="paginationInfo">
+                            Showing 0-0 of 0 records
+                        </div>
+                        <div class="pagination-controls" id="paginationControls">
+                            <!-- Pagination buttons will be inserted here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -860,6 +1011,13 @@
        // Global variables
        let currentPeriod = 'month';
        let selectedLocations = [];
+       let currentPage = 1;
+       let selectedRecords = [];
+       let currentFilters = {
+           startDate: '',
+           endDate: '',
+           branch: ''
+       };
 
        // Multi-select dropdown functionality
        function toggleMultiSelect() {
@@ -953,12 +1111,228 @@
                    loadDashboard();
                    break;
                case 'sessions':
+                   resetFiltersAndPagination();
                    fetchRecords();
                    break;
                case 'analytics':
                    loadAnalytics();
                    break;
            }
+       }
+
+       // Search and filter functions
+       function applyFilters() {
+           currentFilters.startDate = document.getElementById('startDate').value;
+           currentFilters.endDate = document.getElementById('endDate').value;
+           currentFilters.branch = document.getElementById('searchBranch').value;
+           currentPage = 1; // Reset to first page
+           fetchRecords();
+       }
+
+       function clearFilters() {
+           document.getElementById('startDate').value = '';
+           document.getElementById('endDate').value = '';
+           document.getElementById('searchBranch').value = '';
+           currentFilters.startDate = '';
+           currentFilters.endDate = '';
+           currentFilters.branch = '';
+           currentPage = 1;
+           fetchRecords();
+       }
+
+       function resetFiltersAndPagination() {
+           currentPage = 1;
+           selectedRecords = [];
+           currentFilters = { startDate: '', endDate: '', branch: '' };
+           document.getElementById('startDate').value = '';
+           document.getElementById('endDate').value = '';
+           document.getElementById('searchBranch').value = '';
+           updateBulkActionsVisibility();
+       }
+
+       // Pagination functions
+       function goToPage(page) {
+           currentPage = page;
+           fetchRecords();
+       }
+
+       function updatePagination(paginationData) {
+           const paginationInfo = document.getElementById('paginationInfo');
+           const paginationControls = document.getElementById('paginationControls');
+           
+           paginationInfo.textContent = `Showing ${paginationData.start_record}-${paginationData.end_record} of ${paginationData.total_records} records`;
+           
+           let controlsHtml = '';
+           
+           // Previous button
+           if (paginationData.has_prev) {
+               controlsHtml += `<button class="pagination-btn" onclick="goToPage(${paginationData.page - 1})">
+                   <i class="fas fa-chevron-left"></i> Previous
+               </button>`;
+           } else {
+               controlsHtml += `<button class="pagination-btn" disabled>
+                   <i class="fas fa-chevron-left"></i> Previous
+               </button>`;
+           }
+           
+           // Page numbers
+           const startPage = Math.max(1, paginationData.page - 2);
+           const endPage = Math.min(paginationData.total_pages, paginationData.page + 2);
+           
+           for (let i = startPage; i <= endPage; i++) {
+               if (i === paginationData.page) {
+                   controlsHtml += `<button class="pagination-btn active" onclick="goToPage(${i})">${i}</button>`;
+               } else {
+                   controlsHtml += `<button class="pagination-btn" onclick="goToPage(${i})">${i}</button>`;
+               }
+           }
+           
+           // Next button
+           if (paginationData.has_next) {
+               controlsHtml += `<button class="pagination-btn" onclick="goToPage(${paginationData.page + 1})">
+                   Next <i class="fas fa-chevron-right"></i>
+               </button>`;
+           } else {
+               controlsHtml += `<button class="pagination-btn" disabled>
+                   Next <i class="fas fa-chevron-right"></i>
+               </button>`;
+           }
+           
+           paginationControls.innerHTML = controlsHtml;
+       }
+
+       // Selection functions
+       function toggleSelectAll() {
+           const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+           const recordCheckboxes = document.querySelectorAll('.record-checkbox');
+           
+           selectedRecords = [];
+           
+           recordCheckboxes.forEach((checkbox, index) => {
+               checkbox.checked = selectAllCheckbox.checked;
+               if (selectAllCheckbox.checked) {
+                   selectedRecords.push(index + ((currentPage - 1) * 10));
+               }
+           });
+           
+           updateBulkActionsVisibility();
+       }
+
+       function toggleRecordSelection(index, checkbox) {
+           const globalIndex = index + ((currentPage - 1) * 10);
+           
+           if (checkbox.checked) {
+               if (!selectedRecords.includes(globalIndex)) {
+                   selectedRecords.push(globalIndex);
+               }
+           } else {
+               selectedRecords = selectedRecords.filter(idx => idx !== globalIndex);
+           }
+           
+           updateSelectAllCheckbox();
+           updateBulkActionsVisibility();
+       }
+
+       function updateSelectAllCheckbox() {
+           const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+           const recordCheckboxes = document.querySelectorAll('.record-checkbox');
+           const checkedCount = Array.from(recordCheckboxes).filter(cb => cb.checked).length;
+           
+           selectAllCheckbox.checked = checkedCount === recordCheckboxes.length && recordCheckboxes.length > 0;
+           selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < recordCheckboxes.length;
+       }
+
+       function updateBulkActionsVisibility() {
+           const bulkActions = document.getElementById('bulkActions');
+           const selectedCountText = document.getElementById('selectedCountText');
+           
+           if (selectedRecords.length > 0) {
+               bulkActions.classList.add('show');
+               selectedCountText.textContent = `${selectedRecords.length} record${selectedRecords.length !== 1 ? 's' : ''} selected`;
+           } else {
+               bulkActions.classList.remove('show');
+           }
+       }
+
+       // Bulk operations
+       function bulkDownload() {
+           if (selectedRecords.length === 0) {
+               alert('Please select records to download.');
+               return;
+           }
+
+           const confirmDownload = confirm(`Download ${selectedRecords.length} selected record${selectedRecords.length !== 1 ? 's' : ''}?`);
+           if (!confirmDownload) return;
+
+           fetch('/bulk_download', {
+               method: 'POST',
+               headers: {
+                   'Content-Type': 'application/json',
+               },
+               body: JSON.stringify({ indices: selectedRecords })
+           })
+           .then(response => {
+               if (response.ok) {
+                   return response.blob();
+               } else {
+                   throw new Error('Download failed');
+               }
+           })
+           .then(blob => {
+               // Create download link
+               const url = window.URL.createObjectURL(blob);
+               const a = document.createElement('a');
+               a.href = url;
+               a.download = `selected_simulation_data_${new Date().toISOString().split('T')[0]}.xlsx`;
+               document.body.appendChild(a);
+               a.click();
+               window.URL.revokeObjectURL(url);
+               document.body.removeChild(a);
+               
+               // Clear selections
+               selectedRecords = [];
+               updateBulkActionsVisibility();
+               fetchRecords();
+           })
+           .catch(error => {
+               console.error('Download error:', error);
+               alert('Error downloading selected records.');
+           });
+       }
+
+       function bulkDelete() {
+           if (selectedRecords.length === 0) {
+               alert('Please select records to delete.');
+               return;
+           }
+
+           const confirmDelete = confirm(`Are you sure you want to delete ${selectedRecords.length} selected record${selectedRecords.length !== 1 ? 's' : ''}? This action cannot be undone.`);
+           if (!confirmDelete) return;
+
+           fetch('/bulk_delete', {
+               method: 'POST',
+               headers: {
+                   'Content-Type': 'application/json',
+               },
+               body: JSON.stringify({ indices: selectedRecords })
+           })
+           .then(response => response.json())
+           .then(data => {
+               if (data.error) {
+                   throw new Error(data.error);
+               }
+               
+               alert(data.message);
+               selectedRecords = [];
+               updateBulkActionsVisibility();
+               loadSummaryStats();
+               fetchRecords();
+               showDataSavedIndicator();
+           })
+           .catch(error => {
+               console.error('Delete error:', error);
+               alert('Error deleting selected records.');
+           });
        }
 
        // Period selection functions
@@ -1104,7 +1478,7 @@
            // Show loading state
            tableBody.innerHTML = `
                <tr>
-                   <td colspan="10" class="text-center py-4">
+                   <td colspan="11" class="text-center py-4">
                        <div class="loading-spinner" style="display: block;">
                            <i class="fas fa-spinner fa-spin fa-2x"></i>
                            <p class="mt-2">Loading sessions...</p>
@@ -1113,32 +1487,65 @@
                </tr>
            `;
 
-           fetch('/records')
+           // Build query parameters
+           const params = new URLSearchParams({
+               page: currentPage,
+               per_page: 10
+           });
+           
+           if (currentFilters.startDate) {
+               params.append('start_date', currentFilters.startDate);
+           }
+           
+           if (currentFilters.endDate) {
+               params.append('end_date', currentFilters.endDate);
+           }
+           
+           if (currentFilters.branch) {
+               params.append('search_branch', currentFilters.branch);
+           }
+
+           fetch(`/records?${params.toString()}`)
                .then(response => response.json())
                .then(data => {
-                   if (data.length === 0) {
+                   if (data.records.length === 0) {
                        tableBody.innerHTML = `
                            <tr>
-                               <td colspan="10" class="text-center py-5">
+                               <td colspan="11" class="text-center py-5">
                                    <div class="empty-state">
                                        <i class="fas fa-calendar-times fa-3x text-muted"></i>
                                        <h5 class="mt-3 text-muted">No sessions found</h5>
-                                       <p class="text-muted">Add your first simulation session to get started.</p>
+                                       <p class="text-muted">No sessions match your current filters.</p>
                                    </div>
                                </td>
                            </tr>
                        `;
+                       updatePagination({
+                           page: 1,
+                           total_pages: 1,
+                           has_prev: false,
+                           has_next: false,
+                           start_record: 0,
+                           end_record: 0,
+                           total_records: 0
+                       });
                        return;
                    }
 
                    let html = '';
-                   data.forEach((row, i) => {
+                   data.records.forEach((row, i) => {
+                       const globalIndex = i + ((currentPage - 1) * 10);
                        const contactHours = (row.Participants || 0) * (row.Length_Hours || 0);
                        const date = row.Date ? new Date(row.Date).toLocaleDateString() : '';
+                       const isSelected = selectedRecords.includes(globalIndex);
                        
                        html += `
                            <tr>
-                               <td>${i + 1}</td>
+                               <td>
+                                   <input type="checkbox" class="record-checkbox" ${isSelected ? 'checked' : ''} 
+                                          onchange="toggleRecordSelection(${i}, this)">
+                               </td>
+                               <td>${globalIndex + 1}</td>
                                <td>${date}</td>
                                <td><span class="badge bg-primary">${row.Branch || ''}</span></td>
                                <td>${row.Operator || ''}</td>
@@ -1148,11 +1555,11 @@
                                <td><strong>${contactHours.toFixed(1)}</strong></td>
                                <td>${row.Department || ''}</td>
                                <td>
-                                   <button class='btn btn-outline-primary btn-sm me-1' onclick='updateRecord(${i})' title="Update session">
+                                   <button class='btn btn-outline-primary btn-sm me-1' onclick='updateRecord(${globalIndex})' title="Update session">
                                        <i class='fas fa-edit'></i>
                                    </button>
                                    <form method='post' action='/delete_record' style='display:inline;'>
-                                       <input type='hidden' name='index' value='${i}'>
+                                       <input type='hidden' name='index' value='${globalIndex}'>
                                        <button class='btn btn-outline-danger btn-sm' onclick='return confirm("Delete this session?")' title="Delete session">
                                            <i class='fas fa-trash'></i>
                                        </button>
@@ -1162,12 +1569,18 @@
                        `;
                    });
                    tableBody.innerHTML = html;
+                   
+                   // Update pagination
+                   updatePagination(data.pagination);
+                   
+                   // Update select all checkbox
+                   updateSelectAllCheckbox();
                })
                .catch(error => {
                    console.error('Error loading records:', error);
                    tableBody.innerHTML = `
                        <tr>
-                           <td colspan="10" class="text-center py-4">
+                           <td colspan="11" class="text-center py-4">
                                <div class="text-danger">
                                    <i class="fas fa-exclamation-triangle fa-2x"></i>
                                    <p class="mt-2">Error loading sessions</p>
@@ -1306,8 +1719,9 @@
            fetch('/records')
                .then(response => response.json())
                .then(data => {
-                   if (data[index]) {
-                       const record = data[index];
+                   const allRecords = data.records;
+                   if (allRecords && allRecords[index]) {
+                       const record = allRecords[index];
                        
                        // Populate form with existing data
                        const form = document.getElementById('sessionForm');
@@ -1330,6 +1744,7 @@
                        form.querySelector('input[name="Participants"]').value = record.Participants || '';
                        form.querySelector('select[name="Simulated_Participants"]').value = record.Simulated_Participants || '';
                        form.querySelector('input[name="Num_Simulated_Participants"]').value = record.Num_Simulated_Participants || '';
+                       form.querySelector('input[name="SP_Name"]').value = record.SP_Name || '';
                        form.querySelector('select[name="Department"]').value = record.Department || '';
                        form.querySelector('select[name="Course"]').value = record.Course || '';
                        
@@ -1569,7 +1984,11 @@
            fetchRecords,
            loadAnalytics,
            uploadFile,
-           changePeriod
+           changePeriod,
+           applyFilters,
+           clearFilters,
+           bulkDownload,
+           bulkDelete
        };
    </script>
 
