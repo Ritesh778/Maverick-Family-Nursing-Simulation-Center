@@ -482,6 +482,15 @@
             margin-right: 0.5rem;
         }
 
+        .error-message {
+            color: #dc2626;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
         @media (max-width: 768px) {
             .search-row {
                 grid-template-columns: 1fr;
@@ -793,7 +802,6 @@
                                         <option value="NURS 364">NURS 364</option>
                                         <option value="NURS 365">NURS 365</option>
                                         <option value="NURS 433">NURS 433</option>
-                                        
                                         <option value="NURS 435">NURS 435</option>
                                         <option value="NURS 436">NURS 436</option>
                                         <option value="NURS 464">NURS 464</option>
@@ -1155,13 +1163,22 @@
        // Function to fetch all records (for cache)
        function fetchAllRecords() {
            return fetch('/records?page=1&per_page=10000') // Get a large number to fetch all
-               .then(response => response.json())
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                   }
+                   return response.json();
+               })
                .then(data => {
+                   if (data.error) {
+                       throw new Error(data.message || data.error);
+                   }
                    allRecordsCache = data.records || [];
                    return allRecordsCache;
                })
                .catch(error => {
                    console.error('Error fetching all records:', error);
+                   showErrorMessage('Error loading records: ' + error.message);
                    return [];
                });
        }
@@ -1270,6 +1287,37 @@
            }
        }
 
+       // Error handling function
+       function showErrorMessage(message) {
+           // Remove existing error messages
+           const existingErrors = document.querySelectorAll('.error-message');
+           existingErrors.forEach(error => error.remove());
+           
+           // Create new error message
+           const errorDiv = document.createElement('div');
+           errorDiv.className = 'error-message';
+           errorDiv.innerHTML = `
+               <i class="fas fa-exclamation-triangle"></i>
+               <strong>Error:</strong> ${message}
+           `;
+           
+           // Insert at the top of the current section
+           const currentSection = document.querySelector('.active-section');
+           const sectionHeader = currentSection.querySelector('.section-header');
+           if (sectionHeader) {
+               sectionHeader.insertAdjacentElement('afterend', errorDiv);
+           } else {
+               currentSection.insertBefore(errorDiv, currentSection.firstChild);
+           }
+           
+           // Auto-remove after 10 seconds
+           setTimeout(() => {
+               if (errorDiv.parentNode) {
+                   errorDiv.remove();
+               }
+           }, 10000);
+       }
+
        // Bulk operations
        function bulkDownload() {
            if (selectedRecords.length === 0) {
@@ -1288,11 +1336,10 @@
                body: JSON.stringify({ indices: selectedRecords })
            })
            .then(response => {
-               if (response.ok) {
-                   return response.blob();
-               } else {
-                   throw new Error('Download failed');
+               if (!response.ok) {
+                   throw new Error(`HTTP error! status: ${response.status}`);
                }
+               return response.blob();
            })
            .then(blob => {
                // Create download link
@@ -1312,7 +1359,7 @@
            })
            .catch(error => {
                console.error('Download error:', error);
-               alert('Error downloading selected records.');
+               showErrorMessage('Error downloading selected records: ' + error.message);
            });
        }
 
@@ -1332,10 +1379,15 @@
                },
                body: JSON.stringify({ indices: selectedRecords })
            })
-           .then(response => response.json())
+           .then(response => {
+               if (!response.ok) {
+                   throw new Error(`HTTP error! status: ${response.status}`);
+               }
+               return response.json();
+           })
            .then(data => {
                if (data.error) {
-                   throw new Error(data.error);
+                   throw new Error(data.message || data.error);
                }
                
                alert(data.message);
@@ -1349,7 +1401,7 @@
            })
            .catch(error => {
                console.error('Delete error:', error);
-               alert('Error deleting selected records.');
+               showErrorMessage('Error deleting selected records: ' + error.message);
            });
        }
 
@@ -1391,8 +1443,17 @@
 
        function loadSummaryStats() {
            fetch('/api/summary_stats')
-               .then(response => response.json())
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                   }
+                   return response.json();
+               })
                .then(data => {
+                   if (data.error) {
+                       console.error('Summary stats error:', data.error);
+                       return;
+                   }
                    document.getElementById('totalSessions').textContent = data.total_sessions || 0;
                    document.getElementById('totalParticipants').textContent = data.total_participants || 0;
                    document.getElementById('totalContactHours').textContent = (data.total_contact_hours || 0).toFixed(1);
@@ -1400,14 +1461,23 @@
                })
                .catch(error => {
                    console.error('Failed to load summary statistics:', error);
+                   showErrorMessage('Failed to load summary statistics: ' + error.message);
                });
        }
 
        function loadQuickCharts() {
            // Room utilization chart
            fetch('/api/room_utilization')
-               .then(response => response.json())
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                   }
+                   return response.json();
+               })
                .then(data => {
+                   if (data.error) {
+                       throw new Error(data.message || data.error);
+                   }
                    if (data.graph) {
                        const graphData = JSON.parse(data.graph);
                        graphData.layout.height = 300;
@@ -1422,13 +1492,21 @@
                .catch(error => {
                    console.error('Chart error:', error);
                    document.getElementById('quickRoomChart').innerHTML = 
-                       '<div class="empty-state"><i class="fas fa-chart-bar fa-3x"></i><p>No data available</p></div>';
+                       '<div class="empty-state"><i class="fas fa-chart-bar fa-3x"></i><p>Error loading chart</p></div>';
                });
 
            // Timeline chart
            fetch('/api/contact_hours_timeline')
-               .then(response => response.json())
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                   }
+                   return response.json();
+               })
                .then(data => {
+                   if (data.error) {
+                       throw new Error(data.message || data.error);
+                   }
                    if (data.graph) {
                        const graphData = JSON.parse(data.graph);
                        graphData.layout.height = 300;
@@ -1443,7 +1521,7 @@
                .catch(error => {
                    console.error('Timeline chart error:', error);
                    document.getElementById('quickTimelineChart').innerHTML = 
-                       '<div class="empty-state"><i class="fas fa-chart-line fa-3x"></i><p>No data available</p></div>';
+                       '<div class="empty-state"><i class="fas fa-chart-line fa-3x"></i><p>Error loading chart</p></div>';
                });
        }
 
@@ -1470,7 +1548,12 @@
                method: 'POST',
                body: formData
            })
-           .then(response => response.json())
+           .then(response => {
+               if (!response.ok) {
+                   throw new Error(`HTTP error! status: ${response.status}`);
+               }
+               return response.json();
+           })
            .then(data => {
                if (data.error) {
                    throw new Error(data.error);
@@ -1483,7 +1566,8 @@
                showDataSavedIndicator();
            })
            .catch(error => {
-               alert('❌ Upload failed: ' + error.message);
+               console.error('Upload error:', error);
+               showErrorMessage('Upload failed: ' + error.message);
            })
            .finally(() => {
                uploadBtn.innerHTML = originalText;
@@ -1526,9 +1610,18 @@
            }
 
            fetch(`/records?${params.toString()}`)
-               .then(response => response.json())
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                   }
+                   return response.json();
+               })
                .then(data => {
-                   if (data.records.length === 0) {
+                   if (data.error) {
+                       throw new Error(data.message || data.error);
+                   }
+                   
+                   if (!data.records || data.records.length === 0) {
                        tableBody.innerHTML = `
                            <tr>
                                <td colspan="11" class="text-center py-5">
@@ -1604,10 +1697,12 @@
                                <div class="text-danger">
                                    <i class="fas fa-exclamation-triangle fa-2x"></i>
                                    <p class="mt-2">Error loading sessions</p>
+                                   <p class="small">${error.message}</p>
                                </div>
                            </td>
                        </tr>
                    `;
+                   showErrorMessage('Error loading sessions: ' + error.message);
                });
        }
 
@@ -1626,10 +1721,19 @@
            
            // Load room utilization
            fetch(`/api/room_utilization?period=${currentPeriod}`)
-               .then(response => response.json())
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                   }
+                   return response.json();
+               })
                .then(data => {
                    document.getElementById('loading1').style.display = 'none';
                    const chartDiv = document.getElementById('roomUtilizationChart');
+                   
+                   if (data.error) {
+                       throw new Error(data.message || data.error);
+                   }
                    
                    if (data.graph) {
                        const graphData = JSON.parse(data.graph);
@@ -1646,16 +1750,25 @@
                .catch(error => {
                    document.getElementById('loading1').style.display = 'none';
                    document.getElementById('roomUtilizationChart').innerHTML = 
-                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p></div>';
+                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p><p class="small">' + error.message + '</p></div>';
                    document.getElementById('roomUtilizationChart').style.display = 'block';
                });
            
            // Load learner statistics
            fetch(`/api/learner_stats?period=${currentPeriod}`)
-               .then(response => response.json())
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                   }
+                   return response.json();
+               })
                .then(data => {
                    document.getElementById('loading2').style.display = 'none';
                    const chartDiv = document.getElementById('learnerStatsChart');
+                   
+                   if (data.error) {
+                       throw new Error(data.message || data.error);
+                   }
                    
                    if (data.graph) {
                        const graphData = JSON.parse(data.graph);
@@ -1671,16 +1784,25 @@
                .catch(error => {
                    document.getElementById('loading2').style.display = 'none';
                    document.getElementById('learnerStatsChart').innerHTML = 
-                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p></div>';
+                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p><p class="small">' + error.message + '</p></div>';
                    document.getElementById('learnerStatsChart').style.display = 'block';
                });
            
            // Load contact hours timeline
            fetch('/api/contact_hours_timeline')
-               .then(response => response.json())
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                   }
+                   return response.json();
+               })
                .then(data => {
                    document.getElementById('loading3').style.display = 'none';
                    const chartDiv = document.getElementById('contactHoursChart');
+                   
+                   if (data.error) {
+                       throw new Error(data.message || data.error);
+                   }
                    
                    if (data.graph) {
                        const graphData = JSON.parse(data.graph);
@@ -1696,16 +1818,25 @@
                .catch(error => {
                    document.getElementById('loading3').style.display = 'none';
                    document.getElementById('contactHoursChart').innerHTML = 
-                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p></div>';
+                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p><p class="small">' + error.message + '</p></div>';
                    document.getElementById('contactHoursChart').style.display = 'block';
                });
 
            // Load branch contact hours chart
            fetch('/api/branch_contact_hours')
-               .then(response => response.json())
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                   }
+                   return response.json();
+               })
                .then(data => {
                    document.getElementById('loading4').style.display = 'none';
                    const chartDiv = document.getElementById('branchContactHoursChart');
+                   
+                   if (data.error) {
+                       throw new Error(data.message || data.error);
+                   }
                    
                    if (data.graph) {
                        const graphData = JSON.parse(data.graph);
@@ -1721,7 +1852,7 @@
                .catch(error => {
                    document.getElementById('loading4').style.display = 'none';
                    document.getElementById('branchContactHoursChart').innerHTML = 
-                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p></div>';
+                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p><p class="small">' + error.message + '</p></div>';
                    document.getElementById('branchContactHoursChart').style.display = 'block';
                });
        }
@@ -1823,7 +1954,7 @@
                document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
            } else {
                console.error('Record index out of bounds:', index);
-               alert('Error: Record not found');
+               showErrorMessage('Error: Record not found');
            }
        }
 
@@ -2019,7 +2150,8 @@
            clearFilters,
            bulkDownload,
            bulkDelete,
-           fetchAllRecords
+           fetchAllRecords,
+           showErrorMessage
        };
    </script>
 
