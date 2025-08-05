@@ -262,6 +262,54 @@
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+
+            .nav-link {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.9rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .stats-number {
+                font-size: 1.5rem;
+            }
+
+            .chart-container {
+                padding: 1rem;
+            }
+
+            .card-header {
+                padding: 1rem;
+            }
+
+            .form-container {
+                padding: 0 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar-nav {
+                flex-direction: column;
+            }
+
+            .upload-area {
+                padding: 1rem;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
         }
 
         .data-persistence-indicator {
@@ -418,7 +466,7 @@
 
         .pagination-container {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             padding: 1rem 1.5rem;
             border-top: 1px solid #e2e8f0;
@@ -497,6 +545,19 @@
             }
             
             .pagination-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .period-btn {
+                margin-bottom: 0.5rem;
+            }
+
+            .bulk-actions {
+                padding: 0.75rem;
+            }
+
+            .bulk-actions .d-flex {
                 flex-direction: column;
                 gap: 1rem;
             }
@@ -640,17 +701,28 @@
 
                                 <div class="form-group">
                                     <label class="form-label">Operator:</label>
-                                    <select name="Operator" class="form-select" required>
-                                        <option value="">Select Operator</option>
-                                        <option value="Erica Mathis">Erica Mathis</option>
-                                        <option value="Megan Dohm">Megan Dohm</option>
-                                        <option value="Stephanie Bracken">Stephanie Bracken</option>
-                                        <option value="Ritesh Janga">Ritesh Janga</option>
-                                        <option value="Srajan Jain">Srajan Jain</option>
-                                        <option value="Kate Glogowski">Kate Glogowski</option>
-                                        <option value="Austosh Banset">Austosh Basnet</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                    <div class="multi-select-wrapper" id="operatorMultiSelect">
+                                        <div class="multi-select-dropdown" tabindex="0" onclick="toggleMultiSelectOperator()">
+                                            <div class="multi-select-content">
+                                                <span class="multi-select-placeholder">Select Operators</span>
+                                                <div class="multi-select-values" style="display: none;"></div>
+                                            </div>
+                                            <i class="fas fa-chevron-down multi-select-dropdown-icon"></i>
+                                        </div>
+                                        <div class="multi-select-options">
+                                            <div class="multi-select-option" data-value="Erica Mathis">Erica Mathis</div>
+                                            <div class="multi-select-option" data-value="Megan Dohm">Megan Dohm</div>
+                                            <div class="multi-select-option" data-value="Stephanie Bracken">Stephanie Bracken</div>
+                                            <div class="multi-select-option" data-value="Ritesh Janga">Ritesh Janga</div>
+                                            <div class="multi-select-option" data-value="Srajan Jain">Srajan Jain</div>
+                                            <div class="multi-select-option" data-value="Kate Glogowski">Kate Glogowski</div>
+                                            <div class="multi-select-option" data-value="Austosh Basnet">Austosh Basnet</div>
+                                            <div class="multi-select-option" data-value="Other">Other</div>
+                                        </div>
+                                    </div>
+                                    <!-- Hidden inputs to store selected values -->
+                                    <div id="hiddenOperatorInputs"></div>
+                                    <small class="form-text text-muted">Click to select multiple operators</small>
                                 </div>
                             </div>
 
@@ -1020,6 +1092,7 @@
        // Global variables
        let currentPeriod = 'month';
        let selectedLocations = [];
+       let selectedOperators = []; // New variable for operators
        let currentPage = 1;
        let selectedRecords = [];
        let allRecordsCache = []; // Cache to store all records for update functionality
@@ -1029,7 +1102,7 @@
            branch: ''
        };
 
-       // Multi-select dropdown functionality
+       // Multi-select dropdown functionality for Other Locations
        function toggleMultiSelect() {
            const dropdown = document.querySelector('.multi-select-dropdown');
            const options = document.querySelector('.multi-select-options');
@@ -1093,6 +1166,73 @@
            const container = document.getElementById('hiddenLocationInputs');
            container.innerHTML = selectedLocations.map(location => 
                `<input type="hidden" name="Other_Locations" value="${location}">`
+           ).join('');
+       }
+
+       // Multi-select dropdown functionality for Operators
+       function toggleMultiSelectOperator() {
+           const dropdown = document.querySelector('#operatorMultiSelect .multi-select-dropdown');
+           const options = document.querySelector('#operatorMultiSelect .multi-select-options');
+           
+           dropdown.classList.toggle('open');
+           
+           if (dropdown.classList.contains('open')) {
+               options.style.display = 'block';
+           } else {
+               options.style.display = 'none';
+           }
+       }
+
+       function selectMultiOptionOperator(value) {
+           if (selectedOperators.includes(value)) {
+               selectedOperators = selectedOperators.filter(op => op !== value);
+           } else {
+               selectedOperators.push(value);
+           }
+           updateMultiSelectDisplayOperator();
+           updateHiddenInputsOperator();
+       }
+
+       function removeMultiOptionOperator(value) {
+           selectedOperators = selectedOperators.filter(op => op !== value);
+           updateMultiSelectDisplayOperator();
+           updateHiddenInputsOperator();
+       }
+
+       function updateMultiSelectDisplayOperator() {
+           const placeholder = document.querySelector('#operatorMultiSelect .multi-select-placeholder');
+           const valuesContainer = document.querySelector('#operatorMultiSelect .multi-select-values');
+           
+           if (selectedOperators.length === 0) {
+               placeholder.style.display = 'block';
+               valuesContainer.style.display = 'none';
+           } else {
+               placeholder.style.display = 'none';
+               valuesContainer.style.display = 'flex';
+               
+               valuesContainer.innerHTML = selectedOperators.map(operator => 
+                   `<span class="multi-select-tag">
+                       ${operator}
+                       <span class="remove" onclick="removeMultiOptionOperator('${operator}')">&times;</span>
+                   </span>`
+               ).join('');
+           }
+           
+           // Update option states
+           document.querySelectorAll('#operatorMultiSelect .multi-select-option').forEach(option => {
+               const value = option.getAttribute('data-value');
+               if (selectedOperators.includes(value)) {
+                   option.classList.add('selected');
+               } else {
+                   option.classList.remove('selected');
+               }
+           });
+       }
+
+       function updateHiddenInputsOperator() {
+           const container = document.getElementById('hiddenOperatorInputs');
+           container.innerHTML = selectedOperators.map(operator => 
+               `<input type="hidden" name="Operator" value="${operator}">`
            ).join('');
        }
 
@@ -1861,11 +2001,14 @@
        function clearForm() {
            document.getElementById('sessionForm').reset();
            selectedLocations = [];
+           selectedOperators = []; // Clear selected operators
            updateMultiSelectDisplay();
            updateHiddenInputs();
+           updateMultiSelectDisplayOperator(); // Update operator display
+           updateHiddenInputsOperator(); // Update operator hidden inputs
        }
 
-       // FIXED: Update record function that uses cached data
+       // Update record function that uses cached data
        function updateRecord(index) {
            // If cache is empty, fetch all records first
            if (allRecordsCache.length === 0) {
@@ -1892,7 +2035,15 @@
                }
                
                form.querySelector('select[name="Branch"]').value = record.Branch || '';
-               form.querySelector('select[name="Operator"]').value = record.Operator || '';
+               
+               // Handle Operator multi-select
+               selectedOperators = [];
+               if (record.Operator) {
+                   selectedOperators = record.Operator.split(', ').filter(op => op.trim() !== '');
+               }
+               updateMultiSelectDisplayOperator();
+               updateHiddenInputsOperator();
+               
                form.querySelector('input[name="Start_Time"]').value = record.Start_Time || '';
                form.querySelector('input[name="Length_Hours"]').value = record.Length_Hours || '';
                form.querySelector('input[name="Patient_Name"]').value = record.Patient_Name || '';
@@ -1997,7 +2148,7 @@
            // Setup form validation
            setupFormValidation();
            
-           // Setup multi-select event listeners
+           // Setup multi-select event listeners for Other Locations
            document.querySelectorAll('.multi-select-option').forEach(option => {
                option.addEventListener('click', function() {
                    const value = this.getAttribute('data-value');
@@ -2005,12 +2156,27 @@
                });
            });
            
+           // Setup multi-select event listeners for Operators
+           document.querySelectorAll('#operatorMultiSelect .multi-select-option').forEach(option => {
+               option.addEventListener('click', function() {
+                   const value = this.getAttribute('data-value');
+                   selectMultiOptionOperator(value);
+               });
+           });
+           
            // Close multi-select when clicking outside
            document.addEventListener('click', function(e) {
                const multiSelect = document.querySelector('.multi-select-wrapper');
+               const operatorMultiSelect = document.querySelector('#operatorMultiSelect');
+               
                if (!multiSelect.contains(e.target)) {
                    document.querySelector('.multi-select-dropdown').classList.remove('open');
                    document.querySelector('.multi-select-options').style.display = 'none';
+               }
+               
+               if (!operatorMultiSelect.contains(e.target)) {
+                   document.querySelector('#operatorMultiSelect .multi-select-dropdown').classList.remove('open');
+                   document.querySelector('#operatorMultiSelect .multi-select-options').style.display = 'none';
                }
            });
            
@@ -2075,13 +2241,18 @@
                const participants = form.querySelector('input[name="Participants"]').value;
                const length = form.querySelector('input[name="Length_Hours"]').value;
                const branch = form.querySelector('select[name="Branch"]').value;
-               const operator = form.querySelector('select[name="Operator"]').value;
                const room = form.querySelector('select[name="Room"]').value;
                const department = form.querySelector('select[name="Department"]').value;
                
-               if (!date || !participants || !length || !branch || !operator || !room || !department) {
+               if (!date || !participants || !length || !branch || !room || !department) {
                    e.preventDefault();
                    alert('Please fill in all required fields.');
+                   return;
+               }
+
+               if (selectedOperators.length === 0) {
+                   e.preventDefault();
+                   alert('Please select at least one operator.');
                    return;
                }
                
@@ -2156,4 +2327,4 @@
    </script>
 
 </body>
-</html>
+</html></option
