@@ -756,6 +756,8 @@
                                         <option value="Home Health">Home Health</option>
                                         <option value="OR">OR</option>
                                         <option value="Off site">Off site</option>
+                                        <option value="SIM center">SIM center</option>
+                                        <option value="Other">Other</option>
                                     </select>
                                 </div>
 
@@ -1104,8 +1106,8 @@
 
        // Multi-select dropdown functionality for Other Locations
        function toggleMultiSelect() {
-           const dropdown = document.querySelector('.multi-select-dropdown');
-           const options = document.querySelector('.multi-select-options');
+           const dropdown = document.querySelector('.multi-select-wrapper:not(#operatorMultiSelect) .multi-select-dropdown');
+           const options = document.querySelector('.multi-select-wrapper:not(#operatorMultiSelect) .multi-select-options');
            
            dropdown.classList.toggle('open');
            
@@ -1133,8 +1135,8 @@
        }
 
        function updateMultiSelectDisplay() {
-           const placeholder = document.querySelector('.multi-select-placeholder');
-           const valuesContainer = document.querySelector('.multi-select-values');
+           const placeholder = document.querySelector('.multi-select-wrapper:not(#operatorMultiSelect) .multi-select-placeholder');
+           const valuesContainer = document.querySelector('.multi-select-wrapper:not(#operatorMultiSelect) .multi-select-values');
            
            if (selectedLocations.length === 0) {
                placeholder.style.display = 'block';
@@ -1152,7 +1154,7 @@
            }
            
            // Update option states
-           document.querySelectorAll('.multi-select-option').forEach(option => {
+           document.querySelectorAll('.multi-select-wrapper:not(#operatorMultiSelect) .multi-select-option').forEach(option => {
                const value = option.getAttribute('data-value');
                if (selectedLocations.includes(value)) {
                    option.classList.add('selected');
@@ -2149,7 +2151,7 @@
            setupFormValidation();
            
            // Setup multi-select event listeners for Other Locations
-           document.querySelectorAll('.multi-select-option').forEach(option => {
+           document.querySelectorAll('.multi-select-wrapper:not(#operatorMultiSelect) .multi-select-option').forEach(option => {
                option.addEventListener('click', function() {
                    const value = this.getAttribute('data-value');
                    selectMultiOption(value);
@@ -2166,17 +2168,25 @@
            
            // Close multi-select when clicking outside
            document.addEventListener('click', function(e) {
-               const multiSelect = document.querySelector('.multi-select-wrapper');
+               const multiSelect = document.querySelector('.multi-select-wrapper:not(#operatorMultiSelect)');
                const operatorMultiSelect = document.querySelector('#operatorMultiSelect');
                
-               if (!multiSelect.contains(e.target)) {
-                   document.querySelector('.multi-select-dropdown').classList.remove('open');
-                   document.querySelector('.multi-select-options').style.display = 'none';
+               if (multiSelect && !multiSelect.contains(e.target)) {
+                   const dropdown = multiSelect.querySelector('.multi-select-dropdown');
+                   const options = multiSelect.querySelector('.multi-select-options');
+                   if (dropdown && options) {
+                       dropdown.classList.remove('open');
+                       options.style.display = 'none';
+                   }
                }
                
-               if (!operatorMultiSelect.contains(e.target)) {
-                   document.querySelector('#operatorMultiSelect .multi-select-dropdown').classList.remove('open');
-                   document.querySelector('#operatorMultiSelect .multi-select-options').style.display = 'none';
+               if (operatorMultiSelect && !operatorMultiSelect.contains(e.target)) {
+                   const dropdown = operatorMultiSelect.querySelector('.multi-select-dropdown');
+                   const options = operatorMultiSelect.querySelector('.multi-select-options');
+                   if (dropdown && options) {
+                       dropdown.classList.remove('open');
+                       options.style.display = 'none';
+                   }
                }
            });
            

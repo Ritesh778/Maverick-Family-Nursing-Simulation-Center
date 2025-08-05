@@ -342,6 +342,11 @@ def add_record():
             other_locations = request.form.getlist('Other_Locations')
             record['Other_Locations'] = ', '.join(other_locations)
         
+        # Handle multiple selections for Operator
+        if 'Operator' in request.form:
+            operators = request.form.getlist('Operator')
+            record['Operator'] = ', '.join(operators)
+        
         print("New record data:", record)
         
         new_row = pd.DataFrame([record])
@@ -385,6 +390,11 @@ def update_record():
             if 'Other_Locations' in request.form:
                 other_locations = request.form.getlist('Other_Locations')
                 record['Other_Locations'] = ', '.join(other_locations)
+            
+            # Handle multiple selections for Operator
+            if 'Operator' in request.form:
+                operators = request.form.getlist('Operator')
+                record['Operator'] = ', '.join(operators)
             
             # Process the updated record
             new_row = pd.DataFrame([record])
