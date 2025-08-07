@@ -14,8 +14,9 @@ import traceback
 import numpy as np
 
 app = Flask(__name__)
+# Increased max file size to 1GB
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024  # 1GB max file size
 
 # Use SQLite database for persistent storage
 DATABASE_URL = os.environ.get('DATABASE_URL', 'simulation_data.db')
@@ -877,6 +878,64 @@ def api_branch_hours_breakdown():
     except Exception as e:
         return jsonify({'graph': None, 'message': 'Error loading chart', 'error': str(e)})
 
+# NEW API endpoint for department hours breakdown
+@app.route('/api/department_hours_breakdown')
+def api_department_hours_breakdown():
+    try:
+        records = get_all_records_from_db()
+
+        if not records:
+            return jsonify({'graph': None, 'message': 'No data available'})
+
+        df = pd.DataFrame(records)
+        valid_data = df.dropna(subset=['Department']).copy()
+
+        if valid_data.empty:
+            return jsonify({'graph': None, 'message': 'No data available'})
+
+        valid_data['Contact_Hours'] = pd.to_numeric(valid_data['Contact_Hours'], errors='coerce').fillna(0)
+        valid_data['Length_Hours'] = pd.to_numeric(valid_data['Length_Hours'], errors='coerce').fillna(0)
+
+        # Aggregate data by department
+        department_summary = valid_data.groupby('Department').agg({
+            'Contact_Hours': 'sum',
+            'Length_Hours': 'sum'
+        }).reset_index()
+
+        if department_summary.empty:
+            return jsonify({'graph': None, 'message': 'No data available'})
+
+        departments = department_summary['Department'].tolist()
+        contact_hours = department_summary['Contact_Hours'].tolist()
+        session_hours = department_summary['Length_Hours'].tolist()
+
+        # Create the stacked bar chart for departments
+        fig = go.Figure(data=[
+            go.Bar(name='Contact Hours', x=departments, y=contact_hours, marker_color='#4ECDC4'),
+            go.Bar(name='Session Hours', x=departments, y=session_hours, marker_color='#45B7D1')
+        ])
+
+        # Customize the chart layout
+        fig.update_layout(
+            barmode='group',
+            title='Contact Hours vs. Session Hours by Department',
+            xaxis_title='Department',
+            yaxis_title='Total Hours',
+            height=400,
+            yaxis=dict(rangemode='tozero'),
+            legend_title_text='Hour Type'
+        )
+
+        graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
+
+        return jsonify({
+            'graph': graphJSON,
+            'data': department_summary.to_dict('records')
+        })
+
+    except Exception as e:
+        return jsonify({'graph': None, 'message': 'Error loading chart', 'error': str(e)})
+
 
 # Error handlers
 @app.errorhandler(404)
@@ -895,7 +954,7 @@ if __name__ == '__main__':
         
         print(f"\n=== Starting Flask app ===")
         
-        port = int(os.environ.get('PORT', 5002))
+        port = int(os.environ.get('PORT', 5004))
         app.run(host='0.0.0.0', port=port, debug=False)
         
     except Exception as e:

@@ -193,6 +193,27 @@
             border-color: var(--primary-color);
             background-color: #eff6ff;
         }
+        
+        .upload-filename-wrapper {
+            margin-top: 1rem;
+            min-height: 24px; /* Ensure space is reserved when no file is selected */
+        }
+        
+        .upload-filename {
+            display: inline-block;
+            font-weight: 500;
+        }
+        
+        .upload-clear-btn {
+            background: transparent;
+            border: none;
+            color: #dc2626;
+            cursor: pointer;
+        }
+        
+        .upload-clear-btn:hover {
+            color: #b91c1c;
+        }
 
         .table-container {
             background: white;
@@ -662,9 +683,12 @@
                         <div class="upload-area" onclick="document.getElementById('uploadFile').click()">
                             <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
                             <h5 class="upload-text">Drop files here or click to upload</h5>
-                            <p class="upload-filename text-muted" id="selectedFileName">No file selected</p>
+                            <div class="upload-filename-wrapper">
+                                <span class="upload-filename" id="selectedFileName">No file selected</span>
+                                <button type="button" class="upload-clear-btn" onclick="clearFileUpload()">&times;</button>
+                            </div>
                             <p class="text-muted">Supports CSV and Excel files</p>
-                            <input type="file" id="uploadFile" name="file" class="d-none" accept=".csv,.xlsx,.xls" onchange="displayFileName()">
+                            <input type="file" id="uploadFile" name="file" class="d-none" accept=".csv,.xlsx,.xls" onchange="displayFileName(this)">
                         </div>
                         <button type="button" class="btn btn-primary mt-3 w-100" onclick="uploadFile()">
                             <i class="fas fa-upload"></i> Upload File
@@ -1095,6 +1119,20 @@
                             <span class="ms-2">Loading chart...</span>
                         </div>
                         <div id="branchHoursBreakdownChart" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW: Department Hours Breakdown Chart -->
+           <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="chart-container">
+                        <h5 class="mb-3">Contact Hours vs. Session Hours by Department</h5>
+                        <div class="chart-loading" id="loading6">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <span class="ms-2">Loading chart...</span>
+                        </div>
+                        <div id="departmentHoursBreakdownChart" style="display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -1673,22 +1711,34 @@
                    }
                })
                .catch(error => {
-                   console.error('Timeline chart error:', error);
                    document.getElementById('quickTimelineChart').innerHTML = 
                        '<div class="empty-state"><i class="fas fa-chart-line fa-3x"></i><p>Error loading chart</p></div>';
                });
        }
 
        // File upload functions
-       function displayFileName() {
-           const fileInput = document.getElementById('uploadFile');
+       function displayFileName(fileInput) {
            const fileNameDisplay = document.getElementById('selectedFileName');
+           const uploadText = document.querySelector('.upload-text');
+           const clearBtn = document.querySelector('.upload-clear-btn');
+           
            if (fileInput.files.length > 0) {
-               fileNameDisplay.textContent = `Selected file: ${fileInput.files[0].name}`;
+               fileNameDisplay.textContent = fileInput.files[0].name;
+               uploadText.style.display = 'none';
+               clearBtn.style.display = 'inline';
            } else {
                fileNameDisplay.textContent = 'No file selected';
+               uploadText.style.display = 'block';
+               clearBtn.style.display = 'none';
            }
        }
+       
+       function clearFileUpload() {
+           const fileInput = document.getElementById('uploadFile');
+           fileInput.value = ''; // Clear the input
+           displayFileName(fileInput); // Update the display
+       }
+
        function uploadFile() {
            const fileInput = document.getElementById('uploadFile');
            const file = fileInput.files[0];
@@ -1728,7 +1778,9 @@
                    fetchAllRecords();
                    showDataSavedIndicator();
                    // Clear the filename display
-                   displayFileName();
+                   displayFileName(fileInput);
+                   // Reload all analytics charts
+                   loadAnalytics();
            })
            .catch(error => {
                console.error('Upload error:', error);
@@ -1879,12 +1931,14 @@
            document.getElementById('loading3').style.display = 'flex';
            document.getElementById('loading4').style.display = 'flex';
            document.getElementById('loading5').style.display = 'flex';
+           document.getElementById('loading6').style.display = 'flex';
            
            document.getElementById('roomUtilizationChart').style.display = 'none';
            document.getElementById('learnerStatsChart').style.display = 'none';
            document.getElementById('contactHoursChart').style.display = 'none';
            document.getElementById('branchContactHoursChart').style.display = 'none';
            document.getElementById('branchHoursBreakdownChart').style.display = 'none';
+           document.getElementById('departmentHoursBreakdownChart').style.display = 'none';
            
            // Load room utilization
            fetch(`/api/room_utilization?period=${currentPeriod}`)
@@ -2023,7 +2077,7 @@
                    document.getElementById('branchContactHoursChart').style.display = 'block';
                });
 
-            // NEW: Load branch hours breakdown chart
+            // Load branch hours breakdown chart
            fetch('/api/branch_hours_breakdown')
                .then(response => {
                    if (!response.ok) {
@@ -2056,7 +2110,40 @@
                        '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p><p class="small">' + error.message + '</p></div>';
                    document.getElementById('branchHoursBreakdownChart').style.display = 'block';
                });
-
+           
+           // NEW: Load department hours breakdown chart
+           fetch('/api/department_hours_breakdown')
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                   }
+                   return response.json();
+               })
+               .then(data => {
+                   document.getElementById('loading6').style.display = 'none';
+                   const chartDiv = document.getElementById('departmentHoursBreakdownChart');
+                   
+                   if (data.error) {
+                       throw new Error(data.message || data.error);
+                   }
+                   
+                   if (data.graph) {
+                       const graphData = JSON.parse(data.graph);
+                       graphData.layout.height = 400;
+                       graphData.layout.margin = {l: 60, r: 40, t: 60, b: 100};
+                       Plotly.newPlot('departmentHoursBreakdownChart', graphData.data, graphData.layout, {responsive: true});
+                       chartDiv.style.display = 'block';
+                   } else {
+                       chartDiv.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar fa-3x"></i><p>No data available</p></div>';
+                       chartDiv.style.display = 'block';
+                   }
+               })
+               .catch(error => {
+                   document.getElementById('loading6').style.display = 'none';
+                   document.getElementById('departmentHoursBreakdownChart').innerHTML = 
+                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p><p class="small">' + error.message + '</p></div>';
+                   document.getElementById('departmentHoursBreakdownChart').style.display = 'block';
+               });
        }
 
        // Form functions
@@ -2341,7 +2428,7 @@
        window.addEventListener('resize', function() {
            setTimeout(function() {
                // Resize all visible Plotly charts
-               const charts = ['quickRoomChart', 'quickTimelineChart', 'roomUtilizationChart', 'learnerStatsChart', 'contactHoursChart', 'branchContactHoursChart', 'branchHoursBreakdownChart'];
+               const charts = ['quickRoomChart', 'quickTimelineChart', 'roomUtilizationChart', 'learnerStatsChart', 'contactHoursChart', 'branchContactHoursChart', 'branchHoursBreakdownChart', 'departmentHoursBreakdownChart'];
                charts.forEach(chartId => {
                    const element = document.getElementById(chartId);
                    if (element && element.style.display !== 'none') {
