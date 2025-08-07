@@ -661,9 +661,10 @@
                     <div class="card-body">
                         <div class="upload-area" onclick="document.getElementById('uploadFile').click()">
                             <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                            <h5>Drop files here or click to upload</h5>
+                            <h5 class="upload-text">Drop files here or click to upload</h5>
+                            <p class="upload-filename text-muted" id="selectedFileName">No file selected</p>
                             <p class="text-muted">Supports CSV and Excel files</p>
-                            <input type="file" id="uploadFile" name="file" class="d-none" accept=".csv,.xlsx,.xls">
+                            <input type="file" id="uploadFile" name="file" class="d-none" accept=".csv,.xlsx,.xls" onchange="displayFileName()">
                         </div>
                         <button type="button" class="btn btn-primary mt-3 w-100" onclick="uploadFile()">
                             <i class="fas fa-upload"></i> Upload File
@@ -1679,6 +1680,15 @@
        }
 
        // File upload functions
+       function displayFileName() {
+           const fileInput = document.getElementById('uploadFile');
+           const fileNameDisplay = document.getElementById('selectedFileName');
+           if (fileInput.files.length > 0) {
+               fileNameDisplay.textContent = `Selected file: ${fileInput.files[0].name}`;
+           } else {
+               fileNameDisplay.textContent = 'No file selected';
+           }
+       }
        function uploadFile() {
            const fileInput = document.getElementById('uploadFile');
            const file = fileInput.files[0];
@@ -1717,6 +1727,8 @@
                    // Refresh cache after upload
                    fetchAllRecords();
                    showDataSavedIndicator();
+                   // Clear the filename display
+                   displayFileName();
            })
            .catch(error => {
                console.error('Upload error:', error);
