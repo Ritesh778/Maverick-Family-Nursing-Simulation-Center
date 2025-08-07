@@ -15,28 +15,30 @@
             --success-color: #10b981;
             --background-color: #f8fafc;
             --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --navbar-color: #6a0dad; /* Purple color for the navbar */
         }
 
         body { 
-            background-color: var(--background-color);
+            /* Added a subtle gradient background as the provided URL was not a direct image link */
+            background: linear-gradient(to bottom right, #f8fafc, #eef2f5);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             color: #1e293b;
         }
 
         .navbar { 
-            background: white !important;
+            background: var(--navbar-color) !important;
             box-shadow: var(--card-shadow);
             border-bottom: 1px solid #e2e8f0;
         }
 
         .navbar-brand { 
-            color: var(--primary-color) !important; 
+            color: white !important; 
             font-weight: 700;
             font-size: 1.5rem;
         }
 
         .nav-link { 
-            color: var(--secondary-color) !important;
+            color: rgba(255, 255, 255, 0.7) !important;
             font-weight: 500;
             padding: 0.75rem 1rem !important;
             border-radius: 8px;
@@ -45,8 +47,8 @@
         }
 
         .nav-link:hover, .nav-link.active { 
-            color: var(--primary-color) !important;
-            background-color: #eff6ff;
+            color: white !important;
+            background-color: rgba(255, 255, 255, 0.1);
         }
 
         .section { 
@@ -982,7 +984,7 @@
                             <tbody id="recordTable">
                                 <tr>
                                     <td colspan="11" class="text-center py-4">
-                                        <div class="loading-spinner">
+                                        <div class="loading-spinner" style="display: block;">
                                             <i class="fas fa-spinner fa-spin fa-2x"></i>
                                             <p class="mt-2">Loading sessions...</p>
                                         </div>
@@ -1072,7 +1074,7 @@
                </div>
            </div>
 
-           <!-- Branch Contact Hours Chart -->
+           <!-- Existing Branch Contact Hours Chart -->
            <div class="row">
                <div class="col-12 mb-4">
                    <div class="chart-container">
@@ -1085,6 +1087,20 @@
                    </div>
                </div>
            </div>
+
+           <!-- NEW: Branch Hours Breakdown Chart -->
+           <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="chart-container">
+                        <h5 class="mb-3">Contact Hours vs. Session Hours by Branch</h5>
+                        <div class="chart-loading" id="loading5">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <span class="ms-2">Loading chart...</span>
+                        </div>
+                        <div id="branchHoursBreakdownChart" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
        </div>
 
    </div>
@@ -1850,16 +1866,18 @@
 
        // Analytics functions
        function loadAnalytics() {
-           // Show loading indicators
+           // Show loading indicators for all charts
            document.getElementById('loading1').style.display = 'flex';
            document.getElementById('loading2').style.display = 'flex';
            document.getElementById('loading3').style.display = 'flex';
            document.getElementById('loading4').style.display = 'flex';
+           document.getElementById('loading5').style.display = 'flex';
            
            document.getElementById('roomUtilizationChart').style.display = 'none';
            document.getElementById('learnerStatsChart').style.display = 'none';
            document.getElementById('contactHoursChart').style.display = 'none';
            document.getElementById('branchContactHoursChart').style.display = 'none';
+           document.getElementById('branchHoursBreakdownChart').style.display = 'none';
            
            // Load room utilization
            fetch(`/api/room_utilization?period=${currentPeriod}`)
@@ -1997,6 +2015,41 @@
                        '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p><p class="small">' + error.message + '</p></div>';
                    document.getElementById('branchContactHoursChart').style.display = 'block';
                });
+
+            // NEW: Load branch hours breakdown chart
+           fetch('/api/branch_hours_breakdown')
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                   }
+                   return response.json();
+               })
+               .then(data => {
+                   document.getElementById('loading5').style.display = 'none';
+                   const chartDiv = document.getElementById('branchHoursBreakdownChart');
+                   
+                   if (data.error) {
+                       throw new Error(data.message || data.error);
+                   }
+                   
+                   if (data.graph) {
+                       const graphData = JSON.parse(data.graph);
+                       graphData.layout.height = 400;
+                       graphData.layout.margin = {l: 60, r: 40, t: 60, b: 100};
+                       Plotly.newPlot('branchHoursBreakdownChart', graphData.data, graphData.layout, {responsive: true});
+                       chartDiv.style.display = 'block';
+                   } else {
+                       chartDiv.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar fa-3x"></i><p>No data available</p></div>';
+                       chartDiv.style.display = 'block';
+                   }
+               })
+               .catch(error => {
+                   document.getElementById('loading5').style.display = 'none';
+                   document.getElementById('branchHoursBreakdownChart').innerHTML = 
+                       '<div class="empty-state text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i><p>Error loading chart</p><p class="small">' + error.message + '</p></div>';
+                   document.getElementById('branchHoursBreakdownChart').style.display = 'block';
+               });
+
        }
 
        // Form functions
@@ -2291,7 +2344,7 @@
        window.addEventListener('resize', function() {
            setTimeout(function() {
                // Resize all visible Plotly charts
-               const charts = ['quickRoomChart', 'quickTimelineChart', 'roomUtilizationChart', 'learnerStatsChart', 'contactHoursChart', 'branchContactHoursChart'];
+               const charts = ['quickRoomChart', 'quickTimelineChart', 'roomUtilizationChart', 'learnerStatsChart', 'contactHoursChart', 'branchContactHoursChart', 'branchHoursBreakdownChart'];
                charts.forEach(chartId => {
                    const element = document.getElementById(chartId);
                    if (element && element.style.display !== 'none') {
@@ -2337,4 +2390,4 @@
    </script>
 
 </body>
-</html></option
+</html>

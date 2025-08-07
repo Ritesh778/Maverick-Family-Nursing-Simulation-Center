@@ -22,6 +22,27 @@ DATABASE_URL = os.environ.get('DATABASE_URL', 'simulation_data.db')
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# A mapping of possible column names from uploaded files to the standardized database field names.
+# This helps automatically handle minor variations or typos in column headers.
+COLUMN_MAPPING = {
+    'date': 'Date', 'session_date': 'Date',
+    'branch': 'Branch', 'location': 'Branch',
+    'operator': 'Operator',
+    'start_time': 'Start_Time', 'session_start': 'Start_Time',
+    'length_hours': 'Length_Hours', 'session_length': 'Length_Hours', 'length': 'Length_Hours',
+    'patient_name': 'Patient_Name', 'recording_name': 'Patient_Name',
+    'room': 'Room', 'sim_room': 'Room',
+    'debrief_location': 'Debrief_Location',
+    'other_locations': 'Other_Locations',
+    'manikin': 'Manikin', 'mannequin': 'Manikin',
+    'participants': 'Participants', 'num_participants': 'Participants',
+    'department': 'Department', 'dept': 'Department',
+    'course': 'Course', 'nursing_course': 'Course',
+    'simulated_participants': 'Simulated_Participants', 'sp_used': 'Simulated_Participants',
+    'num_simulated_participants': 'Num_Simulated_Participants', 'sp_number': 'Num_Simulated_Participants',
+    'sp_name': 'SP_Name',
+}
+
 FIELDS = [
     'Date','Branch','Operator','Start_Time','Length_Hours','Patient_Name','Room',
     'Debrief_Location','Other_Locations','Manikin','Participants','Department',
@@ -250,8 +271,7 @@ def bulk_delete_records_from_db(record_ids):
         return deleted_count
         
     except Exception as e:
-        print(f"❌ Error bulk deleting records from database: {e}")
-        raise
+        return jsonify({'error': 'Error bulk deleting records', 'message': str(e)}), 500
 
 def process_single_record(record_data):
     """Process a single record for database storage"""
@@ -287,6 +307,16 @@ def process_single_record(record_data):
             processed['Week_Year'] = processed['Month_Year'] = processed['Quarter_Year'] = ''
     
     return processed
+
+def standardize_columns(df, mapping):
+    """Standardize column names of a DataFrame based on a mapping dictionary."""
+    df.columns = [col.strip().replace(' ', '_') for col in df.columns]
+    df.columns = df.columns.str.lower()
+    
+    renamed_columns = {col: mapping.get(col, col) for col in df.columns}
+    
+    return df.rename(columns=renamed_columns)
+
 
 # Routes
 @app.route('/')
@@ -482,13 +512,16 @@ def upload():
         else:
             df = pd.read_excel(filepath, engine='openpyxl')
         
-        df.columns = df.columns.str.strip()
-        
+        # Standardize the column names
+        df = standardize_columns(df, COLUMN_MAPPING)
+
         records_added = 0
         for _, row in df.iterrows():
             record_data = {field: row.get(field, '') for field in FIELDS}
-            save_record_to_db(record_data)
-            records_added += 1
+            # Only save records with a valid date and at least a few key fields
+            if record_data['Date'] and record_data['Branch'] and record_data['Room'] and record_data['Participants']:
+                save_record_to_db(record_data)
+                records_added += 1
         
         os.remove(filepath)
         
@@ -786,6 +819,64 @@ def api_branch_contact_hours():
         
     except Exception as e:
         return jsonify({'graph': None, 'message': 'Error loading chart', 'error': str(e)})
+
+@app.route('/api/branch_hours_breakdown')
+def api_branch_hours_breakdown():
+    try:
+        records = get_all_records_from_db()
+
+        if not records:
+            return jsonify({'graph': None, 'message': 'No data available'})
+
+        df = pd.DataFrame(records)
+        valid_data = df.dropna(subset=['Branch']).copy()
+
+        if valid_data.empty:
+            return jsonify({'graph': None, 'message': 'No data available'})
+
+        valid_data['Contact_Hours'] = pd.to_numeric(valid_data['Contact_Hours'], errors='coerce').fillna(0)
+        valid_data['Length_Hours'] = pd.to_numeric(valid_data['Length_Hours'], errors='coerce').fillna(0)
+
+        # Aggregate data by branch
+        branch_summary = valid_data.groupby('Branch').agg({
+            'Contact_Hours': 'sum',
+            'Length_Hours': 'sum'
+        }).reset_index()
+
+        if branch_summary.empty:
+            return jsonify({'graph': None, 'message': 'No data available'})
+
+        branches = branch_summary['Branch'].tolist()
+        contact_hours = branch_summary['Contact_Hours'].tolist()
+        session_hours = branch_summary['Length_Hours'].tolist()
+
+        # Create the stacked bar chart
+        fig = go.Figure(data=[
+            go.Bar(name='Contact Hours', x=branches, y=contact_hours, marker_color='#4ECDC4'),
+            go.Bar(name='Session Hours', x=branches, y=session_hours, marker_color='#45B7D1')
+        ])
+
+        # Customize the chart layout
+        fig.update_layout(
+            barmode='group',
+            title='Contact Hours vs. Session Hours by Branch',
+            xaxis_title='Branch',
+            yaxis_title='Total Hours',
+            height=400,
+            yaxis=dict(rangemode='tozero'),
+            legend_title_text='Hour Type'
+        )
+
+        graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
+
+        return jsonify({
+            'graph': graphJSON,
+            'data': branch_summary.to_dict('records')
+        })
+
+    except Exception as e:
+        return jsonify({'graph': None, 'message': 'Error loading chart', 'error': str(e)})
+
 
 # Error handlers
 @app.errorhandler(404)
