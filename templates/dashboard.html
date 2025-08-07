@@ -555,10 +555,6 @@
                 margin-bottom: 0.5rem;
             }
 
-            .bulk-actions {
-                padding: 0.75rem;
-            }
-
             .bulk-actions .d-flex {
                 flex-direction: column;
                 gap: 1rem;
@@ -1399,25 +1395,24 @@
            
            selectedRecords = [];
            
-           recordCheckboxes.forEach((checkbox, index) => {
+           recordCheckboxes.forEach((checkbox) => {
                checkbox.checked = selectAllCheckbox.checked;
                if (selectAllCheckbox.checked) {
-                   selectedRecords.push(index + ((currentPage - 1) * 10));
+                   const recordId = checkbox.closest('tr').getAttribute('data-id');
+                   selectedRecords.push(recordId);
                }
            });
            
            updateBulkActionsVisibility();
        }
 
-       function toggleRecordSelection(index, checkbox) {
-           const globalIndex = index + ((currentPage - 1) * 10);
-           
+       function toggleRecordSelection(checkbox, recordId) {
            if (checkbox.checked) {
-               if (!selectedRecords.includes(globalIndex)) {
-                   selectedRecords.push(globalIndex);
+               if (!selectedRecords.includes(recordId)) {
+                   selectedRecords.push(recordId);
                }
            } else {
-               selectedRecords = selectedRecords.filter(idx => idx !== globalIndex);
+               selectedRecords = selectedRecords.filter(id => id !== recordId);
            }
            
            updateSelectAllCheckbox();
@@ -1713,15 +1708,15 @@
                return response.json();
            })
            .then(data => {
-               if (data.error) {
-                   throw new Error(data.error);
-               }
-               alert(`✅ Success! ${data.message}\nRows added: ${data.rows_added}`);
-               fileInput.value = '';
-               loadSummaryStats();
-               // Refresh cache after upload
-               fetchAllRecords();
-               showDataSavedIndicator();
+                   if (data.error) {
+                       throw new Error(data.error);
+                   }
+                   alert(`✅ Success! ${data.message}\nRows added: ${data.rows_added}`);
+                   fileInput.value = '';
+                   loadSummaryStats();
+                   // Refresh cache after upload
+                   fetchAllRecords();
+                   showDataSavedIndicator();
            })
            .catch(error => {
                console.error('Upload error:', error);
@@ -1808,13 +1803,13 @@
                        const globalIndex = i + ((currentPage - 1) * 10);
                        const contactHours = (row.Participants || 0) * (row.Length_Hours || 0);
                        const date = row.Date ? new Date(row.Date).toLocaleDateString() : '';
-                       const isSelected = selectedRecords.includes(globalIndex);
+                       const isSelected = selectedRecords.includes(row.id.toString());
                        
                        html += `
-                           <tr>
+                           <tr data-id="${row.id}">
                                <td>
                                    <input type="checkbox" class="record-checkbox" ${isSelected ? 'checked' : ''} 
-                                          onchange="toggleRecordSelection(${i}, this)">
+                                          onchange="toggleRecordSelection(this, '${row.id}')">
                                </td>
                                <td>${globalIndex + 1}</td>
                                <td>${date}</td>
@@ -1826,11 +1821,11 @@
                                <td><strong>${contactHours.toFixed(1)}</strong></td>
                                <td>${row.Department || ''}</td>
                                <td>
-                                   <button class='btn btn-outline-primary btn-sm me-1' onclick='updateRecord(${globalIndex})' title="Update session">
+                                   <button class='btn btn-outline-primary btn-sm me-1' onclick='updateRecord("${row.id}")' title="Update session">
                                        <i class='fas fa-edit'></i>
                                    </button>
                                    <form method='post' action='/delete_record' style='display:inline;'>
-                                       <input type='hidden' name='index' value='${globalIndex}'>
+                                       <input type='hidden' name='index' value='${row.id}'>
                                        <button class='btn btn-outline-danger btn-sm' onclick='return confirm("Delete this session?")' title="Delete session">
                                            <i class='fas fa-trash'></i>
                                        </button>
@@ -2064,104 +2059,94 @@
        }
 
        // Update record function that uses cached data
-       function updateRecord(index) {
-           // If cache is empty, fetch all records first
-           if (allRecordsCache.length === 0) {
-               fetchAllRecords().then(() => {
-                   updateRecordFromCache(index);
-               });
-           } else {
-               updateRecordFromCache(index);
-           }
-       }
-
-       function updateRecordFromCache(index) {
-           if (index >= 0 && index < allRecordsCache.length) {
-               const record = allRecordsCache[index];
-               
-               // Populate form with existing data
-               const form = document.getElementById('sessionForm');
-               
-               // Convert date format for input
-               if (record.Date) {
-                   const date = new Date(record.Date);
-                   const formattedDate = date.toISOString().split('T')[0];
-                   form.querySelector('input[name="Date"]').value = formattedDate;
-               }
-               
-               form.querySelector('select[name="Branch"]').value = record.Branch || '';
-               
-               // Handle Operator multi-select
-               selectedOperators = [];
-               if (record.Operator) {
-                   selectedOperators = record.Operator.split(', ').filter(op => op.trim() !== '');
-               }
-               updateMultiSelectDisplayOperator();
-               updateHiddenInputsOperator();
-               
-               form.querySelector('input[name="Start_Time"]').value = record.Start_Time || '';
-               form.querySelector('input[name="Length_Hours"]').value = record.Length_Hours || '';
-               form.querySelector('input[name="Patient_Name"]').value = record.Patient_Name || '';
-               form.querySelector('select[name="Room"]').value = record.Room || '';
-               form.querySelector('select[name="Debrief_Location"]').value = record.Debrief_Location || '';
-               form.querySelector('select[name="Manikin"]').value = record.Manikin || '';
-               form.querySelector('input[name="Participants"]').value = record.Participants || '';
-               form.querySelector('select[name="Simulated_Participants"]').value = record.Simulated_Participants || '';
-               form.querySelector('input[name="Num_Simulated_Participants"]').value = record.Num_Simulated_Participants || '';
-               form.querySelector('input[name="SP_Name"]').value = record.SP_Name || '';
-               form.querySelector('select[name="Department"]').value = record.Department || '';
-               form.querySelector('select[name="Course"]').value = record.Course || '';
-               
-               // Handle Other_Locations multi-select
-               selectedLocations = [];
-               if (record.Other_Locations) {
-                   selectedLocations = record.Other_Locations.split(', ').filter(loc => loc.trim() !== '');
-               }
-               updateMultiSelectDisplay();
-               updateHiddenInputs();
-               
-               // Add hidden field to track update
-               const updateField = document.createElement('input');
-               updateField.type = 'hidden';
-               updateField.name = 'update_index';
-               updateField.value = index;
-               updateField.id = 'updateIndex';
-               
-               // Remove existing update field if any
-               const existingField = document.getElementById('updateIndex');
-               if (existingField) {
-                   existingField.remove();
-               }
-               
-               form.appendChild(updateField);
-               
-               // Change form action and button text
-               form.action = '/update_record';
-               const submitBtn = form.querySelector('button[type="submit"]');
-               submitBtn.innerHTML = '<i class="fas fa-save"></i> Update Session';
-               submitBtn.className = 'btn btn-primary btn-lg';
-               
-               // Add cancel button
-               let cancelBtn = document.getElementById('cancelUpdateBtn');
-               if (!cancelBtn) {
-                   cancelBtn = document.createElement('button');
-                   cancelBtn.type = 'button';
-                   cancelBtn.id = 'cancelUpdateBtn';
-                   cancelBtn.className = 'btn btn-outline-secondary';
-                   cancelBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
-                   cancelBtn.onclick = cancelUpdate;
-                   submitBtn.parentNode.insertBefore(cancelBtn, submitBtn.nextSibling);
-               }
-               
-               // Switch to add session section
-               showSection('add-session');
-               
-               // Scroll to form
-               document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
-           } else {
-               console.error('Record index out of bounds:', index);
+       function updateRecord(recordId) {
+            // Find the record in the cache using its unique ID
+            const record = allRecordsCache.find(rec => rec.id == recordId);
+           if (!record) {
+               console.error('Record not found:', recordId);
                showErrorMessage('Error: Record not found');
+               return;
            }
+               
+            // Populate form with existing data
+            const form = document.getElementById('sessionForm');
+               
+            // Convert date format for input
+            if (record.Date) {
+                const date = new Date(record.Date);
+                const formattedDate = date.toISOString().split('T')[0];
+                form.querySelector('input[name="Date"]').value = formattedDate;
+            }
+               
+            form.querySelector('select[name="Branch"]').value = record.Branch || '';
+               
+            // Handle Operator multi-select
+            selectedOperators = [];
+            if (record.Operator) {
+                selectedOperators = record.Operator.split(', ').filter(op => op.trim() !== '');
+            }
+            updateMultiSelectDisplayOperator();
+            updateHiddenInputsOperator();
+               
+            form.querySelector('input[name="Start_Time"]').value = record.Start_Time || '';
+            form.querySelector('input[name="Length_Hours"]').value = record.Length_Hours || '';
+            form.querySelector('input[name="Patient_Name"]').value = record.Patient_Name || '';
+            form.querySelector('select[name="Room"]').value = record.Room || '';
+            form.querySelector('select[name="Debrief_Location"]').value = record.Debrief_Location || '';
+            form.querySelector('select[name="Manikin"]').value = record.Manikin || '';
+            form.querySelector('input[name="Participants"]').value = record.Participants || '';
+            form.querySelector('select[name="Simulated_Participants"]').value = record.Simulated_Participants || '';
+            form.querySelector('input[name="Num_Simulated_Participants"]').value = record.Num_Simulated_Participants || '';
+            form.querySelector('input[name="SP_Name"]').value = record.SP_Name || '';
+            form.querySelector('select[name="Department"]').value = record.Department || '';
+            form.querySelector('select[name="Course"]').value = record.Course || '';
+               
+            // Handle Other_Locations multi-select
+            selectedLocations = [];
+            if (record.Other_Locations) {
+                selectedLocations = record.Other_Locations.split(', ').filter(loc => loc.trim() !== '');
+            }
+            updateMultiSelectDisplay();
+            updateHiddenInputs();
+               
+            // Add hidden field to track update
+            const updateField = document.createElement('input');
+            updateField.type = 'hidden';
+            updateField.name = 'update_index';
+            updateField.value = recordId;
+            updateField.id = 'updateIndex';
+               
+            // Remove existing update field if any
+            const existingField = document.getElementById('updateIndex');
+            if (existingField) {
+                existingField.remove();
+            }
+               
+            form.appendChild(updateField);
+               
+            // Change form action and button text
+            form.action = '/update_record';
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Update Session';
+            submitBtn.className = 'btn btn-primary btn-lg';
+               
+            // Add cancel button
+            let cancelBtn = document.getElementById('cancelUpdateBtn');
+            if (!cancelBtn) {
+                cancelBtn = document.createElement('button');
+                cancelBtn.type = 'button';
+                cancelBtn.id = 'cancelUpdateBtn';
+                cancelBtn.className = 'btn btn-outline-secondary';
+                cancelBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                cancelBtn.onclick = cancelUpdate;
+                submitBtn.parentNode.insertBefore(cancelBtn, submitBtn.nextSibling);
+            }
+               
+            // Switch to add session section
+            showSection('add-session');
+               
+            // Scroll to form
+            document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
        }
 
        function cancelUpdate() {
@@ -2372,7 +2357,7 @@
            if (!num) return '0';
            return num.toLocaleString();
        }
-
+       
        // Export functions for debugging
        window.debugFunctions = {
            loadDashboard,
