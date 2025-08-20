@@ -272,7 +272,8 @@ def bulk_delete_records_from_db(record_ids):
         return deleted_count
         
     except Exception as e:
-        return jsonify({'error': 'Error bulk deleting records', 'message': str(e)}), 500
+        print(f"❌ Error bulk deleting records from database: {e}")
+        raise
 
 def process_single_record(record_data):
     """Process a single record for database storage"""
@@ -851,10 +852,24 @@ def api_branch_hours_breakdown():
         contact_hours = branch_summary['Contact_Hours'].tolist()
         session_hours = branch_summary['Length_Hours'].tolist()
 
-        # Create the stacked bar chart
+        # Create the grouped bar chart with consistent colors
         fig = go.Figure(data=[
-            go.Bar(name='Contact Hours', x=branches, y=contact_hours, marker_color='#4ECDC4'),
-            go.Bar(name='Session Hours', x=branches, y=session_hours, marker_color='#45B7D1')
+            go.Bar(
+                name='Contact Hours', 
+                x=branches, 
+                y=contact_hours, 
+                marker_color='#4ECDC4',  # Teal
+                text=[f"{h:.1f}h" for h in contact_hours],
+                textposition='outside'
+            ),
+            go.Bar(
+                name='Session Hours', 
+                x=branches, 
+                y=session_hours, 
+                marker_color='#45B7D1',  # Blue
+                text=[f"{h:.1f}h" for h in session_hours],
+                textposition='outside'
+            )
         ])
 
         # Customize the chart layout
@@ -865,8 +880,23 @@ def api_branch_hours_breakdown():
             yaxis_title='Total Hours',
             height=400,
             yaxis=dict(rangemode='tozero'),
-            legend_title_text='Hour Type'
+            legend_title_text='Hour Type',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(size=12),
+            title_font=dict(size=16, color='#1e293b'),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            )
         )
+
+        # Add grid lines for better readability
+        fig.update_yaxes(gridcolor='lightgray', gridwidth=1)
+        fig.update_xaxes(gridcolor='lightgray', gridwidth=1)
 
         graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
 
@@ -878,7 +908,6 @@ def api_branch_hours_breakdown():
     except Exception as e:
         return jsonify({'graph': None, 'message': 'Error loading chart', 'error': str(e)})
 
-# NEW API endpoint for department hours breakdown
 @app.route('/api/department_hours_breakdown')
 def api_department_hours_breakdown():
     try:
@@ -909,10 +938,24 @@ def api_department_hours_breakdown():
         contact_hours = department_summary['Contact_Hours'].tolist()
         session_hours = department_summary['Length_Hours'].tolist()
 
-        # Create the stacked bar chart for departments
+        # Create the grouped bar chart for departments with unique colors
         fig = go.Figure(data=[
-            go.Bar(name='Contact Hours', x=departments, y=contact_hours, marker_color='#4ECDC4'),
-            go.Bar(name='Session Hours', x=departments, y=session_hours, marker_color='#45B7D1')
+            go.Bar(
+                name='Contact Hours', 
+                x=departments, 
+                y=contact_hours, 
+                marker_color='#FF6B6B',  # Coral red
+                text=[f"{h:.1f}h" for h in contact_hours],
+                textposition='outside'
+            ),
+            go.Bar(
+                name='Session Hours', 
+                x=departments, 
+                y=session_hours, 
+                marker_color='#FFA726',  # Orange
+                text=[f"{h:.1f}h" for h in session_hours],
+                textposition='outside'
+            )
         ])
 
         # Customize the chart layout
@@ -923,8 +966,23 @@ def api_department_hours_breakdown():
             yaxis_title='Total Hours',
             height=400,
             yaxis=dict(rangemode='tozero'),
-            legend_title_text='Hour Type'
+            legend_title_text='Hour Type',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(size=12),
+            title_font=dict(size=16, color='#1e293b'),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            )
         )
+
+        # Add grid lines for better readability
+        fig.update_yaxes(gridcolor='lightgray', gridwidth=1)
+        fig.update_xaxes(gridcolor='lightgray', gridwidth=1)
 
         graphJSON = json.dumps(fig, cls=PlotlyJSONEncoder)
 
