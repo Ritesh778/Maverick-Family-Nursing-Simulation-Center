@@ -581,6 +581,26 @@
             border-radius: 8px;
             margin: 1rem 0;
         }
+        
+        /* Modal styles */
+        .modal-content {
+            border-radius: 12px;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #e2e8f0;
+            padding: 1rem 1.5rem;
+        }
+
 
         @media (max-width: 768px) {
             .search-row {
@@ -605,12 +625,10 @@
 </head>
 <body>
 
-    <!-- Data persistence indicator -->
     <div id="dataSavedIndicator" class="data-persistence-indicator">
         <i class="fas fa-check-circle"></i> Data automatically saved
     </div>
 
-    <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="#">
@@ -633,17 +651,14 @@
         </div>
     </nav>
 
-    <!-- Main Container -->
     <div class="container mt-4">
         
-        <!-- Dashboard Section -->
         <div class="section active-section" id="dashboard">
             <div class="section-header">
                 <h1 class="section-title">Dashboard</h1>
                 <p class="section-subtitle">Overview of simulation center activities</p>
             </div>
 
-            <!-- Summary Statistics -->
             <div class="stats-grid" id="summaryStats">
                 <div class="stats-card">
                     <i class="fas fa-calendar-check fa-2x" style="color: var(--primary-color);"></i>
@@ -667,7 +682,6 @@
                 </div>
             </div>
 
-            <!-- Quick Charts -->
             <div class="row">
                 <div class="col-lg-8">
                     <div class="chart-container">
@@ -684,7 +698,6 @@
             </div>
         </div>
 
-        <!-- Add Session Section -->
         <div class="section" id="add-session">
             <div class="section-header">
                 <h1 class="section-title">Add New Session</h1>
@@ -692,7 +705,6 @@
             </div>
 
             <div class="form-container">
-                <!-- File Upload -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title">
@@ -716,7 +728,6 @@
                     </div>
                 </div>
 
-                <!-- Manual Entry Form -->
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title">
@@ -763,7 +774,6 @@
                                             <div class="multi-select-option" data-value="Other">Other</div>
                                         </div>
                                     </div>
-                                    <!-- Hidden inputs to store selected values -->
                                     <div id="hiddenOperatorInputs"></div>
                                     <small class="form-text text-muted">Click to select multiple operators</small>
                                 </div>
@@ -820,8 +830,8 @@
 
                             <div class="form-group">
                                 <label class="form-label">Other Locations:</label>
-                                <div class="multi-select-wrapper">
-                                    <div class="multi-select-dropdown" tabindex="0" onclick="toggleMultiSelect()">
+                                <div class="multi-select-wrapper" id="locationMultiSelect">
+                                    <div class="multi-select-dropdown" tabindex="0" onclick="toggleMultiSelectLocation()">
                                         <div class="multi-select-content">
                                             <span class="multi-select-placeholder">Select Locations</span>
                                             <div class="multi-select-values" style="display: none;"></div>
@@ -837,7 +847,6 @@
                                         <div class="multi-select-option" data-value="Other">Other</div>
                                     </div>
                                 </div>
-                                <!-- Hidden inputs to store selected values -->
                                 <div id="hiddenLocationInputs"></div>
                                 <small class="form-text text-muted">Click to select multiple locations</small>
                             </div>
@@ -874,30 +883,28 @@
                                 <input type="number" name="Participants" class="form-control" min="1" max="50" required>
                             </div>
 
-                            <!-- Updated SP Fields section in the form -->
-<div class="form-group">
-    <label class="form-label">SP Used:</label>
-    <select name="Simulated_Participants" class="form-select" id="spUsedSelect" onchange="toggleSPFields()">
-        <option value="">Select Option</option>
-        <option value="No">No</option>
-        <option value="Yes">Yes</option>
-    </select>
-</div>
+                            <div class="form-group">
+                                <label class="form-label">SP Used:</label>
+                                <select name="Simulated_Participants" class="form-select" id="spUsedSelect" onchange="toggleSPFields()">
+                                    <option value="">Select Option</option>
+                                    <option value="No">No</option>
+                                    <option value="Yes">Yes</option>
+                                </select>
+                            </div>
 
-<!-- SP Fields - Initially hidden with display: none -->
-<div class="sp-fields hidden" id="spFields" style="display: none;">
-    <div class="form-row">
-        <div class="form-group">
-            <label class="form-label">SP Number:</label>
-            <input type="number" name="Num_Simulated_Participants" class="form-control" min="0" max="10" value="0" id="spNumber">
-        </div>
+                            <div class="sp-fields hidden" id="spFields" style="display: none;">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">SP Number:</label>
+                                        <input type="number" name="Num_Simulated_Participants" class="form-control" min="0" max="10" value="0" id="spNumber">
+                                    </div>
 
-        <div class="form-group">
-            <label class="form-label">SP Name:</label>
-            <input type="text" name="SP_Name" class="form-control" placeholder="Enter SP name if applicable" id="spName">
-        </div>
-    </div>
-</div>
+                                    <div class="form-group">
+                                        <label class="form-label">SP Name:</label>
+                                        <input type="text" name="SP_Name" class="form-control" placeholder="Enter SP name if applicable" id="spName">
+                                    </div>
+                                </div>
+                            </div>
 
                             <div class="form-row">
                                 <div class="form-group">
@@ -946,14 +953,12 @@
             </div>
         </div>
 
-        <!-- Sessions List Section -->
         <div class="section" id="sessions">
             <div class="section-header">
                 <h1 class="section-title">Session Records</h1>
                 <p class="section-subtitle">View and manage all simulation sessions</p>
             </div>
 
-            <!-- Search Filters -->
             <div class="search-filters">
                 <h6 class="mb-3">Search and Filter</h6>
                 <div class="search-row">
@@ -982,7 +987,6 @@
                 </div>
             </div>
 
-            <!-- Bulk Actions -->
             <div class="bulk-actions" id="bulkActions">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -1039,28 +1043,24 @@
                         </table>
                     </div>
                     
-                    <!-- Pagination -->
                     <div class="pagination-container">
                         <div class="pagination-info" id="paginationInfo">
                             Showing 0-0 of 0 records
                         </div>
                         <div class="pagination-controls" id="paginationControls">
-                            <!-- Pagination buttons will be inserted here -->
-                        </div>
+                            </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Analytics Section -->
         <div class="section" id="analytics">
             <div class="section-header">
                 <h1 class="section-title">Analytics</h1>
                 <p class="section-subtitle">Detailed insights and visualizations</p>
             </div>
 
-            <!-- Period Selection -->
-           <div class="period-selector">
+            <div class="period-selector">
                <div class="d-flex align-items-center justify-content-between">
                    <div>
                        <h6 class="mb-2">Select Time Period:</h6>
@@ -1082,7 +1082,6 @@
                </div>
            </div>
 
-           <!-- Charts -->
            <div class="row">
                <div class="col-12 mb-4">
                    <div class="chart-container">
@@ -1119,7 +1118,6 @@
                </div>
            </div>
 
-           <!-- Existing Branch Contact Hours Chart -->
            <div class="row">
                <div class="col-12 mb-4">
                    <div class="chart-container">
@@ -1133,7 +1131,6 @@
                </div>
            </div>
 
-           <!-- NEW: Branch Hours Breakdown Chart -->
            <div class="row">
                 <div class="col-12 mb-4">
                     <div class="chart-container">
@@ -1147,8 +1144,7 @@
                 </div>
             </div>
 
-            <!-- NEW: Department Hours Breakdown Chart -->
-           <div class="row">
+            <div class="row">
                 <div class="col-12 mb-4">
                     <div class="chart-container">
                         <h5 class="mb-3">Contact Hours vs. Session Hours by Department</h5>
@@ -1164,18 +1160,233 @@
 
    </div>
 
-   <!-- JavaScript -->
-   <script>
-      // Add this JavaScript to your dashboard.html file (replace the existing JavaScript section)
+    <!-- Update Modal with Fixed Multi-Select -->
+    <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form id="updateForm" action="/update_record" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="updateModalLabel">Update Record</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="update_index" id="update_index">
+                        
+                        <div class="form-group">
+                            <label class="form-label">Date (MM/DD/YY):</label>
+                            <input type="date" name="Date" class="form-control" id="updateDate" required>
+                        </div>
 
-// Add this JavaScript to your dashboard.html file (replace the existing JavaScript section)
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Branch:</label>
+                                <select name="Branch" class="form-select" id="updateBranch" required>
+                                    <option value="">Select Branch</option>
+                                    <option value="Academic">Academic</option>
+                                    <option value="Workforce">Workforce</option>
+                                    <option value="Tour">Tour</option>
+                                </select>
+                            </div>
 
-// Add this JavaScript to your dashboard.html file (replace the existing JavaScript section)
+                            <div class="form-group">
+                                <label class="form-label">Operator:</label>
+                                <div class="multi-select-wrapper" id="updateOperatorMultiSelect">
+                                    <div class="multi-select-dropdown" tabindex="0" onclick="toggleMultiSelectUpdateOperator()">
+                                        <div class="multi-select-content">
+                                            <span class="multi-select-placeholder">Select Operators</span>
+                                            <div class="multi-select-values" style="display: none;"></div>
+                                        </div>
+                                        <i class="fas fa-chevron-down multi-select-dropdown-icon"></i>
+                                    </div>
+                                    <div class="multi-select-options">
+                                        <div class="multi-select-option" data-value="Erica Mathis">Erica Mathis</div>
+                                        <div class="multi-select-option" data-value="Megan Dohm">Megan Dohm</div>
+                                        <div class="multi-select-option" data-value="Stephanie Bracken">Stephanie Bracken</div>
+                                        <div class="multi-select-option" data-value="Ritesh Janga">Ritesh Janga</div>
+                                        <div class="multi-select-option" data-value="Srajan Jain">Srajan Jain</div>
+                                        <div class="multi-select-option" data-value="Kate Glogowski">Kate Glogowski</div>
+                                        <div class="multi-select-option" data-value="Austosh Basnet">Austosh Basnet</div>
+                                        <div class="multi-select-option" data-value="Other">Other</div>
+                                    </div>
+                                </div>
+                                <div id="updateHiddenOperatorInputs"></div>
+                                <small class="form-text text-muted">Click to select multiple operators</small>
+                            </div>
+                        </div>
 
-// Global variables
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Start Time:</label>
+                                <input type="time" name="Start_Time" class="form-control" id="updateStart_Time">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Length (Hours):</label>
+                                <input type="number" name="Length_Hours" class="form-control" step="0.5" min="0" max="12" id="updateLength_Hours" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Recording Name:</label>
+                            <input type="text" name="Patient_Name" class="form-control" id="updatePatient_Name">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Room:</label>
+                                <select name="Room" class="form-select" id="updateRoom" required>
+                                    <option value="">Select Room</option>
+                                    <option value="Med-Surg 1">Med-Surg 1</option>
+                                    <option value="Med-Surg 2">Med-Surg 2</option>
+                                    <option value="Med-Surg 3">Med-Surg 3</option>
+                                    <option value="Peds">Peds</option>
+                                    <option value="OB">OB</option>
+                                    <option value="Home Health">Home Health</option>
+                                    <option value="OR">OR</option>
+                                    <option value="Off site">Off site</option>
+                                    <option value="SIM center">SIM center</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Debrief Location:</label>
+                                <select name="Debrief_Location" class="form-select" id="updateDebrief_Location">
+                                    <option value="">Select Location</option>
+                                    <option value="DB1">DB1</option>
+                                    <option value="DB2">DB2</option>
+                                    <option value="DB3">DB3</option>
+                                    <option value="214">214</option>
+                                    <option value="215">215</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Other Locations:</label>
+                            <div class="multi-select-wrapper" id="updateLocationMultiSelect">
+                                <div class="multi-select-dropdown" tabindex="0" onclick="toggleMultiSelectUpdateLocation()">
+                                    <div class="multi-select-content">
+                                        <span class="multi-select-placeholder">Select Locations</span>
+                                        <div class="multi-select-values" style="display: none;"></div>
+                                    </div>
+                                    <i class="fas fa-chevron-down multi-select-dropdown-icon"></i>
+                                </div>
+                                <div class="multi-select-options">
+                                    <div class="multi-select-option" data-value="Med room 1">Med room 1</div>
+                                    <div class="multi-select-option" data-value="Med room 2">Med room 2</div>
+                                    <div class="multi-select-option" data-value="MS1/MS2 Control">MS1/MS2 Control</div>
+                                    <div class="multi-select-option" data-value="MS3/OR Control">MS3/OR Control</div>
+                                    <div class="multi-select-option" data-value="HH/Peds/OB Control">HH/Peds/OB Control</div>
+                                    <div class="multi-select-option" data-value="Other">Other</div>
+                                </div>
+                            </div>
+                            <div id="updateHiddenLocationInputs"></div>
+                            <small class="form-text text-muted">Click to select multiple locations</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Manikin:</label>
+                            <select name="Manikin" class="form-select" id="updateManikin">
+                                <option value="">Select Manikin</option>
+                                <option value="Adult Hal S5301">Adult Hal S5301</option>
+                                <option value="SimMan 10 - Light">SimMan 10 - Light</option>
+                                <option value="SimMan 15 - Light">SimMan 15 - Light</option>
+                                <option value="SimMan 16- Light">SimMan 16- Light</option>
+                                <option value="SimMan 17 - black">SimMan 17 - black</option>
+                                <option value="SimMan 22 - Tan">SimMan 22 - Tan</option>
+                                <option value="SimBaby - L">SimBaby - L</option>
+                                <option value="SimJunior - Tan">SimJunior - Tan</option>
+                                <option value="SimKid - L">SimKid - L</option>
+                                <option value="Pediatric Hal S 2225">Pediatric Hal S 2225</option>
+                                <option value="Birthing baby">Birthing baby</option>
+                                <option value="Newborn Tory">Newborn Tory</option>
+                                <option value="Super Tory">Super Tory</option>
+                                <option value="Preemie Anne">Preemie Anne</option>
+                                <option value="Victoria 1">Victoria 1</option>
+                                <option value="Victoria 2">Victoria 2</option>
+                                <option value="Nursing Anne (Black - Low fidelity)">Nursing Anne (Black - Low fidelity)</option>
+                                <option value="Nursing Anne Simulator - D">Nursing Anne Simulator - D</option>
+                                <option value="Nursing Anne Simulator - L">Nursing Anne Simulator - L</option>
+                                <option value="None">None</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Number of Participants:</label>
+                            <input type="number" name="Participants" class="form-control" min="1" max="50" id="updateParticipants" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">SP Used:</label>
+                            <select name="Simulated_Participants" class="form-select" id="updateSpUsedSelect" onchange="toggleSPFieldsUpdate()">
+                                <option value="">Select Option</option>
+                                <option value="No">No</option>
+                                <option value="Yes">Yes</option>
+                            </select>
+                        </div>
+                        
+                        <div class="sp-fields hidden" id="updateSpFields" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">SP Number:</label>
+                                    <input type="number" name="Num_Simulated_Participants" class="form-control" min="0" max="10" value="0" id="updateSpNumber">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">SP Name:</label>
+                                    <input type="text" name="SP_Name" class="form-control" placeholder="Enter SP name if applicable" id="updateSpName">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Department:</label>
+                                <select name="Department" class="form-select" id="updateDepartment" required>
+                                    <option value="">Select Department</option>
+                                    <option value="Nursing - Undergraduate (PLP)">Nursing - Undergraduate (PLP)</option>
+                                    <option value="Athletic Training">Athletic Training</option>
+                                    <option value="Speech Hearing Rehab Sciences">Speech Hearing Rehab Sciences</option>
+                                    <option value="Dental">Dental</option>
+                                    <option value="Dietetics">Dietetics</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nursing Course:</label>
+                                <select name="Course" class="form-select" id="updateCourse">
+                                    <option value="">Select Course</option>
+                                    <option value="NURS 317">NURS 317</option>
+                                    <option value="NURS 334">NURS 334</option>
+                                    <option value="NURS 336">NURS 336</option>
+                                    <option value="NURS 364">NURS 364</option>
+                                    <option value="NURS 365">NURS 365</option>
+                                    <option value="NURS 433">NURS 433</option>
+                                    <option value="NURS 435">NURS 435</option>
+                                    <option value="NURS 436">NURS 436</option>
+                                    <option value="NURS 464">NURS 464</option>
+                                    <option value="NURS 466">NURS 466</option>
+                                    <option value="OTHER">OTHER</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Global variables
 let currentPeriod = 'month';
 let selectedLocations = [];
 let selectedOperators = [];
+let updateSelectedLocations = [];
+let updateSelectedOperators = [];
 let currentPage = 1;
 let selectedRecords = [];
 let allRecordsCache = [];
@@ -1184,8 +1395,8 @@ let currentFilters = {
     endDate: '',
     branch: ''
 };
+let updateModal = null;
 
-// Function to toggle SP fields based on SP Used selection
 function toggleSPFields() {
     const spUsedSelect = document.getElementById('spUsedSelect');
     const spFields = document.getElementById('spFields');
@@ -1193,65 +1404,133 @@ function toggleSPFields() {
     const spName = document.getElementById('spName');
     
     if (spUsedSelect.value === 'Yes') {
-        // Show SP fields when Yes is selected
         spFields.classList.remove('hidden');
         spFields.classList.add('visible');
         spFields.style.display = 'block';
-        // Set a default value when showing
         if (!spNumber.value || spNumber.value === '0') {
             spNumber.value = '1';
         }
     } else {
-        // Hide SP fields when No is selected or nothing is selected
         spFields.classList.remove('visible');
         spFields.classList.add('hidden');
         spFields.style.display = 'none';
-        // Always set to 0 when hidden
         spNumber.value = '0';
         spName.value = '';
     }
 }
 
-// Multi-select dropdown functionality for Other Locations
-function toggleMultiSelect() {
-    const dropdown = document.querySelector('.multi-select-wrapper:not(#operatorMultiSelect) .multi-select-dropdown');
-    const options = document.querySelector('.multi-select-wrapper:not(#operatorMultiSelect) .multi-select-options');
+function toggleSPFieldsUpdate() {
+    const spUsedSelect = document.getElementById('updateSpUsedSelect');
+    const spFields = document.getElementById('updateSpFields');
+    const spNumber = document.getElementById('updateSpNumber');
+    const spName = document.getElementById('updateSpName');
     
-    dropdown.classList.toggle('open');
-    
-    if (dropdown.classList.contains('open')) {
-        options.style.display = 'block';
+    if (spUsedSelect.value === 'Yes') {
+        spFields.classList.remove('hidden');
+        spFields.classList.add('visible');
+        spFields.style.display = 'block';
+        if (!spNumber.value || spNumber.value === '0') {
+            spNumber.value = '1';
+        }
     } else {
-        options.style.display = 'none';
+        spFields.classList.remove('visible');
+        spFields.classList.add('hidden');
+        spFields.style.display = 'none';
+        spNumber.value = '0';
+        spName.value = '';
     }
 }
 
-// Multi-select dropdown functionality for Operators
+// Multi-select functions for the main form
+function toggleMultiSelectLocation() {
+    const dropdown = document.querySelector('#locationMultiSelect .multi-select-dropdown');
+    const options = document.querySelector('#locationMultiSelect .multi-select-options');
+    dropdown.classList.toggle('open');
+    options.style.display = dropdown.classList.contains('open') ? 'block' : 'none';
+}
+
 function toggleMultiSelectOperator() {
     const dropdown = document.querySelector('#operatorMultiSelect .multi-select-dropdown');
     const options = document.querySelector('#operatorMultiSelect .multi-select-options');
-    
     dropdown.classList.toggle('open');
-    
-    if (dropdown.classList.contains('open')) {
-        options.style.display = 'block';
-    } else {
-        options.style.display = 'none';
-    }
+    options.style.display = dropdown.classList.contains('open') ? 'block' : 'none';
 }
 
-// Updated function to handle option selection for locations
-function selectMultiOption(value) {
+// Multi-select functions for the update modal
+function toggleMultiSelectUpdateLocation() {
+    const dropdown = document.querySelector('#updateLocationMultiSelect .multi-select-dropdown');
+    const options = document.querySelector('#updateLocationMultiSelect .multi-select-options');
+    dropdown.classList.toggle('open');
+    options.style.display = dropdown.classList.contains('open') ? 'block' : 'none';
+}
+
+function toggleMultiSelectUpdateOperator() {
+    const dropdown = document.querySelector('#updateOperatorMultiSelect .multi-select-dropdown');
+    const options = document.querySelector('#updateOperatorMultiSelect .multi-select-options');
+    dropdown.classList.toggle('open');
+    options.style.display = dropdown.classList.contains('open') ? 'block' : 'none';
+}
+
+// Update functions for multi-select state management
+function updateMultiSelectState(wrapperId, selectedValues, updateHiddenInputsFunc) {
+    const wrapper = document.getElementById(wrapperId);
+    if (!wrapper) return;
+    
+    const placeholder = wrapper.querySelector('.multi-select-placeholder');
+    const valuesContainer = wrapper.querySelector('.multi-select-values');
+
+    if (selectedValues.length === 0) {
+        placeholder.style.display = 'block';
+        valuesContainer.style.display = 'none';
+    } else {
+        placeholder.style.display = 'none';
+        valuesContainer.style.display = 'flex';
+        valuesContainer.innerHTML = selectedValues.map(value => 
+            `<span class="multi-select-tag">
+                ${value}
+                <span class="remove" onclick="removeMultiValue('${wrapperId}', '${value}')">&times;</span>
+            </span>`
+        ).join('');
+    }
+
+    wrapper.querySelectorAll('.multi-select-option').forEach(option => {
+        const value = option.getAttribute('data-value');
+        if (selectedValues.includes(value)) {
+            option.classList.add('selected');
+        } else {
+            option.classList.remove('selected');
+        }
+    });
+
+    updateHiddenInputsFunc(selectedValues, wrapperId);
+}
+
+function updateMultiSelectDisplayLocation() {
+    updateMultiSelectState('locationMultiSelect', selectedLocations, updateHiddenInputsLocation);
+}
+
+function updateMultiSelectDisplayOperator() {
+    updateMultiSelectState('operatorMultiSelect', selectedOperators, updateHiddenInputsOperator);
+}
+
+function updateMultiSelectUpdateLocationDisplay() {
+    updateMultiSelectState('updateLocationMultiSelect', updateSelectedLocations, updateHiddenInputsUpdateLocation);
+}
+
+function updateMultiSelectUpdateOperatorDisplay() {
+    updateMultiSelectState('updateOperatorMultiSelect', updateSelectedOperators, updateHiddenInputsUpdateOperator);
+}
+
+// Select option functions
+function selectMultiOptionLocation(value) {
     if (selectedLocations.includes(value)) {
         selectedLocations = selectedLocations.filter(loc => loc !== value);
     } else {
         selectedLocations.push(value);
     }
-    updateMultiSelectDisplay();
-    updateHiddenInputs();
+    updateMultiSelectDisplayLocation();
 }
 
-// Updated function to handle option selection for operators
 function selectMultiOptionOperator(value) {
     if (selectedOperators.includes(value)) {
         selectedOperators = selectedOperators.filter(op => op !== value);
@@ -1259,82 +1538,45 @@ function selectMultiOptionOperator(value) {
         selectedOperators.push(value);
     }
     updateMultiSelectDisplayOperator();
-    updateHiddenInputsOperator();
 }
 
-function removeMultiOption(value) {
-    selectedLocations = selectedLocations.filter(loc => loc !== value);
-    updateMultiSelectDisplay();
-    updateHiddenInputs();
-}
-
-function removeMultiOptionOperator(value) {
-    selectedOperators = selectedOperators.filter(op => op !== value);
-    updateMultiSelectDisplayOperator();
-    updateHiddenInputsOperator();
-}
-
-function updateMultiSelectDisplay() {
-    const placeholder = document.querySelector('.multi-select-wrapper:not(#operatorMultiSelect) .multi-select-placeholder');
-    const valuesContainer = document.querySelector('.multi-select-wrapper:not(#operatorMultiSelect) .multi-select-values');
-    
-    if (selectedLocations.length === 0) {
-        placeholder.style.display = 'block';
-        valuesContainer.style.display = 'none';
+function selectMultiOptionUpdateLocation(value) {
+    if (updateSelectedLocations.includes(value)) {
+        updateSelectedLocations = updateSelectedLocations.filter(loc => loc !== value);
     } else {
-        placeholder.style.display = 'none';
-        valuesContainer.style.display = 'flex';
-        
-        valuesContainer.innerHTML = selectedLocations.map(location => 
-            `<span class="multi-select-tag">
-                ${location}
-                <span class="remove" onclick="removeMultiOption('${location}')">&times;</span>
-            </span>`
-        ).join('');
+        updateSelectedLocations.push(value);
     }
-    
-    // Update option states
-    document.querySelectorAll('.multi-select-wrapper:not(#operatorMultiSelect) .multi-select-option').forEach(option => {
-        const value = option.getAttribute('data-value');
-        if (selectedLocations.includes(value)) {
-            option.classList.add('selected');
-        } else {
-            option.classList.remove('selected');
-        }
-    });
+    updateMultiSelectUpdateLocationDisplay();
 }
 
-function updateMultiSelectDisplayOperator() {
-    const placeholder = document.querySelector('#operatorMultiSelect .multi-select-placeholder');
-    const valuesContainer = document.querySelector('#operatorMultiSelect .multi-select-values');
-    
-    if (selectedOperators.length === 0) {
-        placeholder.style.display = 'block';
-        valuesContainer.style.display = 'none';
+function selectMultiOptionUpdateOperator(value) {
+    if (updateSelectedOperators.includes(value)) {
+        updateSelectedOperators = updateSelectedOperators.filter(op => op !== value);
     } else {
-        placeholder.style.display = 'none';
-        valuesContainer.style.display = 'flex';
-        
-        valuesContainer.innerHTML = selectedOperators.map(operator => 
-            `<span class="multi-select-tag">
-                ${operator}
-                <span class="remove" onclick="removeMultiOptionOperator('${operator}')">&times;</span>
-            </span>`
-        ).join('');
+        updateSelectedOperators.push(value);
     }
-    
-    // Update option states
-    document.querySelectorAll('#operatorMultiSelect .multi-select-option').forEach(option => {
-        const value = option.getAttribute('data-value');
-        if (selectedOperators.includes(value)) {
-            option.classList.add('selected');
-        } else {
-            option.classList.remove('selected');
-        }
-    });
+    updateMultiSelectUpdateOperatorDisplay();
 }
 
-function updateHiddenInputs() {
+// Remove value functions
+function removeMultiValue(wrapperId, value) {
+    if (wrapperId === 'locationMultiSelect') {
+        selectedLocations = selectedLocations.filter(loc => loc !== value);
+        updateMultiSelectDisplayLocation();
+    } else if (wrapperId === 'operatorMultiSelect') {
+        selectedOperators = selectedOperators.filter(op => op !== value);
+        updateMultiSelectDisplayOperator();
+    } else if (wrapperId === 'updateLocationMultiSelect') {
+        updateSelectedLocations = updateSelectedLocations.filter(loc => loc !== value);
+        updateMultiSelectUpdateLocationDisplay();
+    } else if (wrapperId === 'updateOperatorMultiSelect') {
+        updateSelectedOperators = updateSelectedOperators.filter(op => op !== value);
+        updateMultiSelectUpdateOperatorDisplay();
+    }
+}
+
+// Hidden input update functions
+function updateHiddenInputsLocation() {
     const container = document.getElementById('hiddenLocationInputs');
     container.innerHTML = selectedLocations.map(location => 
         `<input type="hidden" name="Other_Locations" value="${location}">`
@@ -1348,17 +1590,29 @@ function updateHiddenInputsOperator() {
     ).join('');
 }
 
-// Function to clear the form and reset multi-selects
+function updateHiddenInputsUpdateLocation(locations, containerId) {
+    const container = document.getElementById('updateHiddenLocationInputs');
+    container.innerHTML = locations.map(location =>
+        `<input type="hidden" name="Other_Locations" value="${location}">`
+    ).join('');
+}
+
+function updateHiddenInputsUpdateOperator(operators, containerId) {
+    const container = document.getElementById('updateHiddenOperatorInputs');
+    container.innerHTML = operators.map(operator =>
+        `<input type="hidden" name="Operator" value="${operator}">`
+    ).join('');
+}
+
 function clearForm() {
     document.getElementById('sessionForm').reset();
     selectedLocations = [];
     selectedOperators = [];
-    updateMultiSelectDisplay();
+    updateMultiSelectDisplayLocation();
     updateMultiSelectDisplayOperator();
-    updateHiddenInputs();
+    updateHiddenInputsLocation();
     updateHiddenInputsOperator();
     
-    // Reset SP fields to hidden state
     const spFields = document.getElementById('spFields');
     const spNumber = document.getElementById('spNumber');
     const spName = document.getElementById('spName');
@@ -1368,14 +1622,8 @@ function clearForm() {
     spFields.style.display = 'none';
     spNumber.value = '0';
     spName.value = '';
-    
-    // Reset custom time picker
-    document.getElementById('startTimeDisplay').value = '';
-    document.getElementById('startTimeValue').value = '';
-    closeTimePicker();
 }
 
-// File upload functions
 function displayFileName(input) {
     const fileName = input.files[0] ? input.files[0].name : 'No file selected';
     document.getElementById('selectedFileName').textContent = fileName;
@@ -1408,9 +1656,8 @@ function uploadFile() {
             alert(data.message + '\nRows added: ' + data.rows_added);
             clearFileUpload();
             showDataSavedIndicator();
-            // Refresh data
             loadSummaryStats();
-            fetchAllRecords();
+            fetchRecords();
         }
     })
     .catch(error => {
@@ -1427,15 +1674,16 @@ function showDataSavedIndicator() {
     }, 3000);
 }
 
-// Initialize event listeners when page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Dashboard loaded');
     
-    // Add event listeners for multi-select dropdowns
-    document.querySelectorAll('.multi-select-wrapper:not(#operatorMultiSelect) .multi-select-option').forEach(option => {
+    updateModal = new bootstrap.Modal(document.getElementById('updateModal'), {});
+    
+    // Setup main form multi-select event listeners
+    document.querySelectorAll('#locationMultiSelect .multi-select-option').forEach(option => {
         option.addEventListener('click', function() {
             const value = this.getAttribute('data-value');
-            selectMultiOption(value);
+            selectMultiOptionLocation(value);
         });
     });
     
@@ -1445,8 +1693,23 @@ document.addEventListener('DOMContentLoaded', function() {
             selectMultiOptionOperator(value);
         });
     });
+
+    // Setup update modal multi-select event listeners
+    document.querySelectorAll('#updateLocationMultiSelect .multi-select-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const value = this.getAttribute('data-value');
+            selectMultiOptionUpdateLocation(value);
+        });
+    });
+
+    document.querySelectorAll('#updateOperatorMultiSelect .multi-select-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const value = this.getAttribute('data-value');
+            selectMultiOptionUpdateOperator(value);
+        });
+    });
     
-    // Close multi-select dropdowns when clicking outside
+    // Close dropdowns when clicking outside
     document.addEventListener('click', function(event) {
         if (!event.target.closest('.multi-select-wrapper')) {
             document.querySelectorAll('.multi-select-dropdown').forEach(dropdown => {
@@ -1456,43 +1719,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Setup form validation
     setupFormValidation();
-    
-    // Setup drag and drop
     setupDragAndDrop();
-    
-    // Load initial dashboard data
     loadDashboard();
 });
 
-// Navigation functions
 function showSection(sectionId) {
-    // Update nav links
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
     });
     
-    // Find and activate the clicked nav link
     const clickedLink = document.querySelector(`[data-section="${sectionId}"]`);
     if (clickedLink) {
         clickedLink.classList.add('active');
     }
 
-    // Show section
     document.querySelectorAll('.section').forEach(section => {
         section.classList.remove('active-section');
     });
     document.getElementById(sectionId).classList.add('active-section');
 
-    // Load section-specific data
     switch(sectionId) {
         case 'dashboard':
             loadDashboard();
             break;
         case 'sessions':
             resetFiltersAndPagination();
-            fetchRecords();
+            fetchAllRecords().then(() => fetchRecords());
             break;
         case 'analytics':
             loadAnalytics();
@@ -1500,7 +1753,6 @@ function showSection(sectionId) {
     }
 }
 
-// Dashboard functions
 function loadDashboard() {
     loadSummaryStats();
     loadQuickCharts();
@@ -1521,7 +1773,6 @@ function loadSummaryStats() {
 }
 
 function loadQuickCharts() {
-    // Load quick timeline chart
     fetch('/api/contact_hours_timeline')
     .then(response => response.json())
     .then(data => {
@@ -1532,7 +1783,6 @@ function loadQuickCharts() {
     })
     .catch(error => console.error('Error loading timeline chart:', error));
 
-    // Load quick room chart
     fetch('/api/room_utilization')
     .then(response => response.json())
     .then(data => {
@@ -1544,7 +1794,6 @@ function loadQuickCharts() {
     .catch(error => console.error('Error loading room chart:', error));
 }
 
-// Analytics functions
 function loadAnalytics() {
     loadAllAnalyticsCharts();
 }
@@ -1596,16 +1845,13 @@ function loadAllAnalyticsCharts() {
 function changePeriod(period) {
     currentPeriod = period;
     
-    // Update button states
     document.querySelectorAll('.period-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     document.querySelector(`[data-period="${period}"]`).classList.add('active');
     
-    // Update period label
     document.getElementById('periodLabel').textContent = period.charAt(0).toUpperCase() + period.slice(1);
     
-    // Reload learner stats chart
     const loadingElement = document.getElementById('loading2');
     const chartElement = document.getElementById('learnerStatsChart');
     
@@ -1639,7 +1885,6 @@ function refreshAnalytics() {
     loadAllAnalyticsCharts();
 }
 
-// Records functions
 function fetchRecords() {
     const params = new URLSearchParams({
         page: currentPage,
@@ -1701,6 +1946,10 @@ function displayRecords(records) {
             <td>${record.Department || ''}</td>
             <td>
                 <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary btn-sm" 
+                            onclick="editRecord(${record.id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
                     <button class="btn btn-outline-danger btn-sm" 
                             onclick="deleteRecord(${record.id})">
                         <i class="fas fa-trash"></i>
@@ -1726,9 +1975,8 @@ function deleteRecord(recordId) {
     .then(response => {
         if (response.redirected) {
             showDataSavedIndicator();
-            fetchRecords();
             loadSummaryStats();
-            fetchAllRecords();
+            fetchAllRecords().then(() => fetchRecords());
         } else {
             return response.json();
         }
@@ -1744,7 +1992,52 @@ function deleteRecord(recordId) {
     });
 }
 
-// Search and filter functions
+function editRecord(recordId) {
+    if (allRecordsCache.length === 0) {
+        showErrorMessage('Error: Record data is still loading. Please try again in a moment.');
+        return;
+    }
+    const recordToEdit = allRecordsCache.find(r => r.id === recordId);
+    if (!recordToEdit) {
+        showErrorMessage('Error: Record not found.');
+        return;
+    }
+
+    // Reset the multi-select arrays for update
+    updateSelectedLocations = [];
+    updateSelectedOperators = [];
+
+    document.getElementById('update_index').value = recordId;
+    document.getElementById('updateDate').value = recordToEdit.Date || '';
+    document.getElementById('updateBranch').value = recordToEdit.Branch || '';
+    document.getElementById('updateStart_Time').value = recordToEdit.Start_Time || '';
+    document.getElementById('updateLength_Hours').value = recordToEdit.Length_Hours || 0;
+    document.getElementById('updatePatient_Name').value = recordToEdit.Patient_Name || '';
+    document.getElementById('updateRoom').value = recordToEdit.Room || '';
+    document.getElementById('updateDebrief_Location').value = recordToEdit.Debrief_Location || '';
+    document.getElementById('updateManikin').value = recordToEdit.Manikin || '';
+    document.getElementById('updateParticipants').value = recordToEdit.Participants || 0;
+    document.getElementById('updateSpUsedSelect').value = recordToEdit.Simulated_Participants || 'No';
+    document.getElementById('updateSpNumber').value = recordToEdit.Num_Simulated_Participants || 0;
+    document.getElementById('updateSpName').value = recordToEdit.SP_Name || '';
+    document.getElementById('updateDepartment').value = recordToEdit.Department || '';
+    document.getElementById('updateCourse').value = recordToEdit.Course || '';
+
+    // Handle multi-selects for update form
+    if (recordToEdit.Other_Locations) {
+        updateSelectedLocations = recordToEdit.Other_Locations.split(',').map(s => s.trim()).filter(s => s);
+    }
+    if (recordToEdit.Operator) {
+        updateSelectedOperators = recordToEdit.Operator.split(',').map(s => s.trim()).filter(s => s);
+    }
+    
+    updateMultiSelectUpdateLocationDisplay();
+    updateMultiSelectUpdateOperatorDisplay();
+    toggleSPFieldsUpdate();
+
+    updateModal.show();
+}
+
 function applyFilters() {
     currentFilters.startDate = document.getElementById('startDate').value;
     currentFilters.endDate = document.getElementById('endDate').value;
@@ -1774,7 +2067,6 @@ function resetFiltersAndPagination() {
     updateBulkActionsVisibility();
 }
 
-// Function to fetch all records (for cache)
 function fetchAllRecords() {
     return fetch('/records?page=1&per_page=10000')
         .then(response => {
@@ -1797,7 +2089,6 @@ function fetchAllRecords() {
         });
 }
 
-// Pagination functions
 function goToPage(page) {
     currentPage = page;
     fetchRecords();
@@ -1811,7 +2102,6 @@ function updatePagination(paginationData) {
     
     let controlsHtml = '';
     
-    // Previous button
     if (paginationData.has_prev) {
         controlsHtml += `<button class="pagination-btn" onclick="goToPage(${paginationData.page - 1})">
             <i class="fas fa-chevron-left"></i> Previous
@@ -1822,7 +2112,6 @@ function updatePagination(paginationData) {
         </button>`;
     }
     
-    // Page numbers
     const startPage = Math.max(1, paginationData.page - 2);
     const endPage = Math.min(paginationData.total_pages, paginationData.page + 2);
     
@@ -1834,7 +2123,6 @@ function updatePagination(paginationData) {
         }
     }
     
-    // Next button
     if (paginationData.has_next) {
         controlsHtml += `<button class="pagination-btn" onclick="goToPage(${paginationData.page + 1})">
             Next <i class="fas fa-chevron-right"></i>
@@ -1848,7 +2136,6 @@ function updatePagination(paginationData) {
     paginationControls.innerHTML = controlsHtml;
 }
 
-// Selection functions
 function toggleSelectAll() {
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
     const recordCheckboxes = document.querySelectorAll('.record-checkbox');
@@ -1900,7 +2187,6 @@ function updateBulkActionsVisibility() {
     }
 }
 
-// Error handling function
 function showErrorMessage(message) {
     const existingErrors = document.querySelectorAll('.error-message');
     existingErrors.forEach(error => error.remove());
@@ -1927,7 +2213,6 @@ function showErrorMessage(message) {
     }, 10000);
 }
 
-// Bulk operations
 function bulkDownload() {
     if (selectedRecords.length === 0) {
         alert('Please select records to download.');
@@ -2001,8 +2286,7 @@ function bulkDelete() {
         selectedRecords = [];
         updateBulkActionsVisibility();
         loadSummaryStats();
-        fetchRecords();
-        fetchAllRecords();
+        fetchAllRecords().then(() => fetchRecords());
         showDataSavedIndicator();
     })
     .catch(error => {
@@ -2011,7 +2295,6 @@ function bulkDelete() {
     });
 }
 
-// Drag and drop functionality
 function setupDragAndDrop() {
     const uploadArea = document.querySelector('.upload-area');
     
@@ -2054,7 +2337,6 @@ function setupDragAndDrop() {
     }
 }
 
-// Form validation
 function setupFormValidation() {
     const form = document.getElementById('sessionForm');
     
@@ -2090,7 +2372,6 @@ function setupFormValidation() {
             return;
         }
         
-        // Set SP number to 0 if SP Used is "No"
         const spUsed = form.querySelector('select[name="Simulated_Participants"]').value;
         const spNumber = form.querySelector('input[name="Num_Simulated_Participants"]');
         if (spUsed === 'No') {
@@ -2099,12 +2380,72 @@ function setupFormValidation() {
         
         setTimeout(() => {
             showDataSavedIndicator();
-            fetchAllRecords();
+            fetchRecords();
         }, 500);
+    });
+
+    const updateForm = document.getElementById('updateForm');
+    updateForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const recordId = formData.get('update_index');
+        
+        const date = formData.get('Date');
+        const participants = formData.get('Participants');
+        const length = formData.get('Length_Hours');
+        const branch = formData.get('Branch');
+        const room = formData.get('Room');
+        const department = formData.get('Department');
+        const operatorCount = document.querySelectorAll('#updateHiddenOperatorInputs input').length;
+        
+        if (!date || !participants || !length || !branch || !room || !department) {
+            alert('Please fill in all required fields.');
+            return;
+        }
+        if (operatorCount === 0) {
+            alert('Please select at least one operator.');
+            return;
+        }
+        if (parseInt(participants) < 1) {
+            alert('Number of participants must be at least 1.');
+            return;
+        }
+        if (parseFloat(length) <= 0) {
+            alert('Session length must be greater than 0.');
+            return;
+        }
+        
+        const spUsed = formData.get('Simulated_Participants');
+        if (spUsed === 'No') {
+            formData.set('Num_Simulated_Participants', '0');
+        }
+
+        fetch('/update_record', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => {
+            if (response.redirected) {
+                updateModal.hide();
+                showDataSavedIndicator();
+                loadSummaryStats();
+                fetchAllRecords().then(() => fetchRecords());
+            } else {
+                return response.json();
+            }
+        })
+        .then(data => {
+            if (data && data.error) {
+                showErrorMessage('Error updating record: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Update error:', error);
+            showErrorMessage('Error updating record: ' + error.message);
+        });
     });
 }
 
-// Window resize handler for charts
 window.addEventListener('resize', function() {
     setTimeout(function() {
         const charts = ['quickRoomChart', 'quickTimelineChart', 'roomUtilizationChart', 'learnerStatsChart', 'contactHoursChart', 'branchContactHoursChart', 'branchHoursBreakdownChart', 'departmentHoursBreakdownChart'];
@@ -2121,10 +2462,9 @@ window.addEventListener('resize', function() {
     }, 100);
 });
 
-// Utility functions
 function formatDate(dateString) {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString + 'T00:00:00').toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
@@ -2132,27 +2472,10 @@ function formatDate(dateString) {
 }
 
 function formatNumber(num) {
-    if (!num) return '0';
+    if (num === null || num === undefined) return '0';
     return num.toLocaleString();
 }
-
-// Export functions for debugging
-window.debugFunctions = {
-    loadDashboard,
-    fetchRecords,
-    loadAnalytics,
-    uploadFile,
-    changePeriod,
-    applyFilters,
-    clearFilters,
-    bulkDownload,
-    bulkDelete,
-    fetchAllRecords,
-    showErrorMessage,
-    toggleSPFields
-};
-   </script>
+    </script>
 
 </body>
 </html>
-      
